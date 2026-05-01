@@ -492,7 +492,8 @@ const INSIGHTS = [
   `<strong>2026 trajectory:</strong> At current pace (+17% over 2025 YTD), projected full-year revenue is ${fmt(totals.y26a + totals.y26p)} — ${(totals.y26a + totals.y26p) >= 1000000 ? 'on track to hit the $1MM milestone.' : 'approximately ' + fmt(1000000 - totals.y26a - totals.y26p) + ' short of the $1MM goal. Closing 2–3 larger commercial jobs in Q3 would close the gap.'}`,
 ];
 document.getElementById('ai-insights-body').innerHTML = INSIGHTS.map(i=>`<div class="ai-insight">${i}</div>`).join('');
-
+window.YOY = YOY; window.INSIGHTS = INSIGHTS;
+  
 // Build YOY table
 const hdr = document.getElementById('yoy-hdr');
 hdr.innerHTML = '<th style="text-align:left;width:80px">Month</th><th class="r">2020</th><th class="r">2021</th><th class="r">2022</th><th class="r">2023</th><th class="r">2024</th><th class="r">2025</th><th class="r" style="color:#C8963E">2026</th>';
