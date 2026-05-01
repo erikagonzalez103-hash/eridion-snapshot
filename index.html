@@ -549,5 +549,165 @@ function switchTab(id) {
 // Attempt live data fetch on load
 loadLiveData();
 </script>
+<!-- =============================================================
+     YOY DRAWER — drop-in patch
+     Paste this entire block immediately before </body> in your
+     morning brief index.html. Self-contained: own styles, HTML,
+     and script. Uses your existing CSS variables (--navy, --cream,
+     --gold, etc.) and DM Sans / DM Serif Display fonts.
+
+     Behavior:
+       - Gold "YOY" tab pinned to the LEFT edge (the task sidebar
+         owns the right edge already)
+       - Click tab → drawer slides in from left
+       - Three big stats at top: YTD, on-pace projection, gap to $1MM
+       - Full 7-year × 12-month table with Jan 2026 in red (YoY decline)
+         and Feb–Dec in gray italic (projected)
+       - Esc or × closes
+       - Z-index 199/200 — sits above page content, below modals
+     ============================================================= -->
+
+<style>
+.yoy-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);width:36px;padding:18px 0;background:var(--gold);color:var(--navy-deep);border:none;border-radius:0 8px 8px 0;cursor:pointer;writing-mode:vertical-rl;text-orientation:mixed;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;z-index:199;box-shadow:2px 0 12px rgba(0,0,0,0.08);transition:padding .15s,background .15s;}
+.yoy-tab:hover{padding:22px 0;background:var(--gold-light);}
+
+.yoy-drawer{position:fixed;top:0;left:-620px;bottom:0;width:600px;max-width:100%;background:var(--white);border-right:1px solid var(--border);z-index:200;display:flex;flex-direction:column;transition:left .25s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 20px rgba(0,0,0,0);}
+.yoy-drawer.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,0.08);}
+
+.yoy-head{background:var(--navy-deep);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.yoy-head-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--cream);line-height:1;}
+.yoy-head-sub{font-size:10px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-top:4px;}
+.yoy-close{background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;transition:color .15s;}
+.yoy-close:hover{color:white;}
+
+.yoy-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:14px 18px;background:var(--cream);border-bottom:1px solid var(--border);flex-shrink:0;}
+.yoy-stat-lbl{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+.yoy-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy);line-height:1.1;}
+.yoy-stat-val.gap{color:var(--amber);}
+.yoy-stat-foot{font-size:11px;color:var(--text-2);margin-top:3px;}
+
+.yoy-tbl-wrap{padding:8px 18px 18px;flex:1;overflow-y:auto;}
+.yoy-tbl{width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:11px;font-variant-numeric:tabular-nums;margin-top:6px;}
+.yoy-tbl th,.yoy-tbl td{padding:5px 5px;border-bottom:1px solid var(--cream-dark);}
+.yoy-tbl th{font-weight:600;text-align:right;color:var(--text-2);font-size:10px;text-transform:uppercase;letter-spacing:0.05em;position:sticky;top:0;background:var(--white);}
+.yoy-tbl th:first-child,.yoy-tbl td:first-child{text-align:left;padding-left:0;color:var(--text-2);font-weight:600;}
+.yoy-tbl td{text-align:right;}
+.yoy-tbl .proj{color:var(--text-3);font-style:italic;}
+.yoy-tbl .decline{color:var(--red);font-weight:600;}
+.yoy-tbl .total td{font-weight:600;color:var(--navy);border-top:2px solid var(--navy);padding-top:8px;}
+.yoy-tbl .pct td{color:var(--text-2);font-size:10.5px;padding-bottom:8px;border-bottom:none;}
+.yoy-tbl .pct .up{color:var(--green);}
+
+.yoy-foot{padding:12px 18px;background:var(--cream);border-top:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--text-2);display:flex;justify-content:space-between;align-items:center;}
+.yoy-foot strong{font-weight:600;color:var(--navy);}
+</style>
+
+<button class="yoy-tab" id="yoy-tab" type="button" title="YOY tracking — where we're headed">YOY</button>
+
+<aside class="yoy-drawer" id="yoy-drawer" aria-hidden="true" aria-label="Year over year sales">
+  <div class="yoy-head">
+    <div>
+      <div class="yoy-head-title">YOY sales</div>
+      <div class="yoy-head-sub">where we're headed</div>
+    </div>
+    <button class="yoy-close" id="yoy-close" type="button" aria-label="Close YOY drawer">&times;</button>
+  </div>
+  <div class="yoy-stats">
+    <div>
+      <div class="yoy-stat-lbl">2026 YTD</div>
+      <div class="yoy-stat-val" id="yoy-ytd">$46,209</div>
+      <div class="yoy-stat-foot" id="yoy-ytd-foot">January only</div>
+    </div>
+    <div>
+      <div class="yoy-stat-lbl">On pace for</div>
+      <div class="yoy-stat-val" id="yoy-pace">$735,513</div>
+      <div class="yoy-stat-foot" id="yoy-pace-foot">+7% vs 2025</div>
+    </div>
+    <div>
+      <div class="yoy-stat-lbl">Gap to $1MM</div>
+      <div class="yoy-stat-val gap" id="yoy-gap">&minus;$264,487</div>
+      <div class="yoy-stat-foot" id="yoy-gap-foot">73.5% of goal</div>
+    </div>
+  </div>
+  <div class="yoy-tbl-wrap">
+    <table class="yoy-tbl">
+      <thead>
+        <tr><th></th><th>2020</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>2026</th></tr>
+      </thead>
+      <tbody id="yoy-tbody"></tbody>
+    </table>
+  </div>
+  <div class="yoy-foot">
+    <span><strong>1 of 12</strong> months actual &middot; rest projected</span>
+    <span>Goal: <strong>$1MM</strong></span>
+  </div>
+</aside>
+
+<script>
+(function() {
+  var tab = document.getElementById('yoy-tab');
+  var drawer = document.getElementById('yoy-drawer');
+  var closeBtn = document.getElementById('yoy-close');
+
+  function openYoy() { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); }
+  function closeYoy() { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); }
+  function toggleYoy() { drawer.classList.contains('open') ? closeYoy() : openYoy(); }
+
+  tab.addEventListener('click', toggleYoy);
+  closeBtn.addEventListener('click', closeYoy);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) closeYoy();
+  });
+
+  // Hardcoded data — replace with fetch to /api/yoy when worker endpoint is ready
+  var data = {
+    months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    rows: [
+      [null, 1346, 23202, 27459, 32783, 58174, 46209],
+      [null, 2118, 12310, 20075, 32325, 73525, 48519],
+      [null, 8873, 25693, 17686, 68312, 56501, 50945],
+      [null, 18391, 16945, 19021, 48944, 52093, 53493],
+      [7550, 14366, 13301, 32038, 62403, 83333, 56167],
+      [6070, 20700, 26605, 28305, 48149, 88678, 58976],
+      [null, 12263, 31618, 46779, 55800, 45582, 61924],
+      [4943, 13543, 25516, 25875, 25292, 23601, 65021],
+      [13260, 12162, 38180, 27356, 18986, 67552, 68272],
+      [3859, 15815, 10914, 33942, 66187, 52038, 71685],
+      [3336, 6015, 34125, 23502, 23833, 51590, 75269],
+      [6996, 32251, 47167, 20578, 60841, 34125, 79033]
+    ],
+    totals: [46015, 157843, 305577, 322615, 543856, 686792, 735513],
+    yoy: [null, 71, 48, 5, 41, 21, 7],
+    actualMonths2026: 1
+  };
+
+  function fmt(n) { return n == null ? '—' : n.toLocaleString(); }
+
+  var html = '';
+  data.rows.forEach(function(row, i) {
+    html += '<tr><td>' + data.months[i] + '</td>';
+    row.forEach(function(v, j) {
+      var cls = '';
+      if (j === 6) {
+        if (i >= data.actualMonths2026) cls = 'proj';
+        else if (v != null && row[5] != null && v < row[5]) cls = 'decline';
+      }
+      html += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + fmt(v) + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '<tr class="total"><td>Total</td>';
+  data.totals.forEach(function(t, j) {
+    html += '<td' + (j === 6 ? ' class="proj"' : '') + '>' + fmt(t) + '</td>';
+  });
+  html += '</tr>';
+  html += '<tr class="pct"><td>YoY</td>';
+  data.yoy.forEach(function(p) {
+    html += p == null ? '<td>—</td>' : '<td class="up">+' + p + '%</td>';
+  });
+  html += '</tr>';
+  document.getElementById('yoy-tbody').innerHTML = html;
+})();
+</script>  
 </body>
 </html>
