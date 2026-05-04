@@ -298,14 +298,24 @@ function applyLiveData(d) {
     fcSub.textContent = fcPct + '% of target · ' + d.daysRemaining + ' days remaining · ' + paceText;
   }
 
-  // ── Flags: aggressively filter Xero noise so only real, current items show
-  //    (1) Drop Gusto entirely (legacy ghost — not a current vendor)
-  //    (2) Drop any flag whose vendor name matches a known builder/customer.
-  //        Customer-named items showing in A/P flags are mis-categorized A/R
-  //        invoices in Xero — they're not bills Eridion actually owes.
-  //    (3) Drop items older than 60 days — Tara handles legacy reconciliation
-  //    (4) Cap at top 8 by amount so the page doesn't become a wall of red
-  const FLAG_NOISE_PATTERNS = [
+  // ── Filter Xero noise BEFORE rendering anything that depends on bills/orders.
+  //    These rules apply globally to flags, the Cash Flow A/P table, anywhere
+  //    bill data appears. Goal: nothing on screen unless it's something Erika
+  //    might actually need to act on.
+  //
+  //    GENERAL RULE: anything 90+ days past due is filtered.
+  //    Why: Xero has a recurring categorization bug that mis-flags A/R invoices
+  //    Erika sent to customers as A/P bills she owes. Tara cleans them, they
+  //    come back. Anything 90+ days old in A/P is virtually always one of these
+  //    ghosts. M3's legitimate aged invoices are already filtered separately
+  //    and tracked in the order tracker, so they don't conflict with this rule.
+  //
+  //    SECONDARY RULE: builder/customer name in the vendor field. Catches the
+  //    same Xero ghosts when they're less than 90 days old (still mistakes,
+  //    just newer ones). Also catches Gusto (legacy ghost, no longer used).
+  const NOW_MS = Date.now();
+  const NINETY_DAYS_MS = 90 * 86400000;
+  const CUSTOMER_VENDOR_PATTERNS = [
     /\bgusto\b/i,
     /\bgrand homes\b/i, /\bd\.?r\.? horton\b/i, /\bdrhorton\b/i,
     /\bhines homes\b/i, /\bhines\b/i, /\bdrees\b/i, /\bgutman\b/i,
@@ -313,18 +323,49 @@ function applyLiveData(d) {
     /\bdesco\b/i, /\bpennington\b/i, /\bpreston trail\b/i,
     /\bshawn harned\b/i, /\blongacre\b/i, /\brausch coleman\b/i,
     /\bnylo\b/i, /\byahalom\b/i,
-    /\bm3\b/i, /m3 glass/i,
   ];
+
+  // Returns true if a bill row should be HIDDEN
+  const isNoiseBill = (b) => {
+    // Rule 1: 90+ days past due → hide
+    if (b.due) {
+      const dueMs = new Date(b.due + 'T00:00:00').getTime();
+      if (!isNaN(dueMs) && (NOW_MS - dueMs) > NINETY_DAYS_MS) return true;
+    }
+    // Rule 2: vendor name matches a known customer/legacy ghost → hide
+    const vendor = (b.vendor || '').toString();
+    if (CUSTOMER_VENDOR_PATTERNS.some(re => re.test(vendor))) return true;
+    return false;
+  };
+
+  // Build a set of invoice numbers that are noise — used to filter flags by
+  // matching their text against the underlying bill list. This is the bridge
+  // between "the data" and "the natural-language flag strings" the worker
+  // generates.
+  const noiseInvNums = new Set();
+  [...(d.billsOwed || []), ...(d.openOrders || [])].forEach(b => {
+    if (isNoiseBill(b)) {
+      if (b.inv && b.inv !== '—') noiseInvNums.add(String(b.inv).toLowerCase());
+    }
+  });
+
+  // ── Flags: drop any flag whose text references a noise bill, OR whose vendor
+  //    name is itself a customer pattern (catches flags where the worker
+  //    didn't include the inv# in the message).
   const flagsEl = document.getElementById('sum-flags');
   if (flagsEl && d.flags) {
     let flags = (d.flags || []).filter(f => {
-      const t = f.text || '';
-      return !FLAG_NOISE_PATTERNS.some(re => re.test(t));
+      const t = (f.text || '').toLowerCase();
+      // Customer-named in flag text → drop
+      if (CUSTOMER_VENDOR_PATTERNS.some(re => re.test(t))) return false;
+      // Flag mentions an invoice number we already classified as noise → drop
+      for (const inv of noiseInvNums) { if (inv && t.includes(inv)) return false; }
+      return true;
     });
     // Sort danger first, then warn, then ok; keep most urgent visible
     const sortKey = { danger: 0, warn: 1, ok: 2, insight: 3 };
     flags.sort((a,b) => (sortKey[a.type] ?? 9) - (sortKey[b.type] ?? 9));
-    // Cap to top 8 dangerous/warn items + always keep "ok" pacing flag
+    // Cap to top 7 dangerous/warn items + always keep "ok"/insight pacing flags
     const dangerWarn = flags.filter(f => f.type === 'danger' || f.type === 'warn').slice(0, 7);
     const okFlags = flags.filter(f => f.type === 'ok' || f.type === 'insight');
     flags = [...dangerWarn, ...okFlags];
@@ -354,15 +395,11 @@ function applyLiveData(d) {
     const delta = d.mtdRevenue - d.monthlyTarget;
     if (salesSum) salesSum.innerHTML = '<span class="' + (d.mtdRevenue>=d.monthlyTarget?'green':'amber') + '">' + fmt(d.mtdRevenue) + ' collected</span> <span style="color:#888">· ' + (delta>=0?'+':'') + fmt(delta) + ' vs target</span>';
   }
-  // Update invoices owed table — apply same filter so Cash Flow tab is also clean
+  // Update invoices owed table — same filter as flags (90-day + customer-name)
   if (d.billsOwed || d.openOrders) {
     const oweBody = document.getElementById('owe-body');
     if (oweBody) {
-      const cleanRow = (b) => {
-        const blob = (b.vendor || '') + ' ' + (b.inv || '');
-        return !FLAG_NOISE_PATTERNS.some(re => re.test(blob));
-      };
-      const all = [...(d.billsOwed||[]), ...(d.openOrders||[])].filter(cleanRow);
+      const all = [...(d.billsOwed||[]), ...(d.openOrders||[])].filter(b => !isNoiseBill(b));
       oweBody.innerHTML = all.map(b => {
         const rowCls = b.overdue?'overdue':b.dueSoon?'warn-row':'';
         const badgeCls = b.overdue?'badge-red':b.dueSoon?'badge-amber':'badge-green';
