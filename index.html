@@ -263,6 +263,22 @@ function applyLiveData(d) {
     if (v) v.textContent = fmt(d.mtdRevenue);
     if (s) s.textContent = mtdInvCount + (mtdInvCount === 1 ? ' invoice · ' : ' invoices · ') + 'goal: ' + fmt(d.monthlyTarget);
   }
+  if (cards[3]) {
+    // Total Cash — sum of bank balances from Xero BankSummary.
+    // Was previously stuck at the hardcoded sample value ($81,820) because
+    // applyLiveData only touched cards 0–2. If the worker returns no value
+    // (cash report unavailable, Xero down, etc.) we leave the sample in
+    // place rather than show a $0 that would be misleading.
+    if (d.totalCash != null) {
+      const v = cards[3].querySelector('.val');
+      const s = cards[3].querySelector('.sub');
+      if (v) v.textContent = fmt(d.totalCash);
+      if (s && Array.isArray(d.cashAccounts)) {
+        const n = d.cashAccounts.length;
+        s.textContent = n + (n === 1 ? ' account' : ' accounts') + (n === 8 ? ' · all 8 PF buckets' : '');
+      }
+    }
+  }
 
   // ── Forecast bar with pace tick showing where you "should" be by today
   //    Pace = (days elapsed / days in month) × monthly target.
