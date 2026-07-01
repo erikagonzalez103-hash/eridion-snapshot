@@ -195,6 +195,14 @@ const DATA = {
   arOverdue: 23148.51,               // overdue portion (includes stale ghosts)
   arGhostNote: '~$9.7k of the overdue A/R is stale 2024 Grand Homes invoices (899 days old) — write off or chase hard.',
   apOwed: 1061.99,                   // bills Eridion owes (Xero amount_due)
+  goalMoM: 0.05,                     // forecast method: +5%/month stretch goal to push toward
+  arAwaitingCount: 19,               // open (not-yet-due) invoice count
+  arOverdueCount: 17,                // overdue invoice count
+  arOpenTop: [                       // largest open invoices (from Xero receivables)
+    {inv:'INV-1489', who:'Grand Homes',                amt:7167.74, age:899,  ghost:true},
+    {inv:'2128',     who:'Grand Homes North Division', amt:3661.18, age:null, ghost:false, note:'due Jul 25'},
+    {inv:'INV-1488', who:'Grand Homes',                amt:2565.65, age:899,  ghost:true},
+  ],
 
   // Who paid last completed month (cash), from Xero top-customers
   lastClosedMonthName: 'June 2026',
@@ -231,11 +239,13 @@ const annual = {}; YEARS.forEach(yr => annual[yr] = sum(y[yr]));
 const me = DATA.monthsElapsed;
 const ytd26 = sum(y[2026].slice(0, me));
 const ytd25 = sum(y[2025].slice(0, me));
-const growthYTD = ytd25 ? (ytd26/ytd25 - 1) : 0;         // e.g. -0.295
-const paceFactor = ytd25 ? ytd26/ytd25 : 1;              // apply to remaining 2025 months
-const projRemainder = sum(y[2025].slice(me).map(v => (v||0)*paceFactor));
-const projFY26 = ytd26 + projRemainder;
-const lastClosed = y[2026][me-1];
+const growthYTD = ytd25 ? (ytd26/ytd25 - 1) : 0;         // honest reality check vs last year
+const lastActualIdx = me - 1;
+const lastClosed = y[2026][lastActualIdx];
+// Forecast = Erika's goal method: grow +5%/month from the last actual month, as a stretch target.
+const goalFor = i => i >= me ? lastClosed * Math.pow(1 + DATA.goalMoM, i - lastActualIdx) : null;
+let projRemainder = 0; for (let i = me; i < 12; i++) projRemainder += goalFor(i);
+const projFY26 = ytd26 + projRemainder;                  // YTD actual + goal-paced remainder
 const bestMonthIdx = y[2026].slice(0,me).reduce((bi,v,i,a)=> v>a[bi]?i:bi, 0);
 
 // ── Header / footer ─────────────────────────────────────────────────────
@@ -250,7 +260,7 @@ document.getElementById('sum-metrics').innerHTML = [
   {val:fmt(lastClosed), lbl:DATA.lastClosedMonthName.split(' ')[0]+' collected', sub:'last full month', cls:'green'},
   {val:fmt(ytd26), lbl:'2026 YTD', sub:'through '+MONTHS[me-1]+' · cash', cls:'navy'},
   {val:(growthPct>=0?'+':'')+growthPct+'%', lbl:'vs 2025 pace', sub:fmt(ytd26)+' vs '+fmt(ytd25)+' by now', cls: growthPct>=0?'green':'red'},
-  {val:fmt(DATA.cashOnHand), lbl:'Cash on hand', sub:fmt(DATA.arOwed)+' owed to you', cls:'navy'},
+  {val:fmt(projFY26), lbl:'2026 forecast', sub:'goal pace · +5%/mo', cls:'amber'},
 ].map(m=>`<div class="metric"><div class="val ${m.cls}">${m.val}</div><div class="lbl">${m.lbl}</div><div class="sub">${m.sub}</div></div>`).join('');
 
 // ── SUMMARY: YTD progress vs prior-year pace (honest) ───────────────────
@@ -262,11 +272,11 @@ fcBar.classList.add(growthYTD>=0?'green':growthYTD>=-0.1?'amber':'red');
 const pace = document.getElementById('fc-pace');
 pace.style.display='block'; pace.style.left='100%'; pace.setAttribute('data-label','2025 pace');
 document.getElementById('fc-ytd').textContent = '2026 YTD: '+fmt(ytd26);
-document.getElementById('fc-proj').textContent = 'On pace for '+fmt(projFY26)+' this year';
+document.getElementById('fc-proj').textContent = 'Goal forecast: '+fmt(projFY26)+' (+5%/mo)';
 document.getElementById('fc-goal').textContent = '2025 by now: '+fmt(ytd25);
 document.getElementById('fc-sub').innerHTML =
-  `At the current pace 2026 projects to <strong>${fmt(projFY26)}</strong> — vs 2025's ${fmt(annual[2025])} and the $1MM goal `+
-  `(gap ${fmt(DATA.annualGoal-projFY26)}). Full-year goal marker not shown to scale; the tick above is last year's same-date pace.`;
+  `Bar shows 2026 collected vs where 2025 stood by this date — you're <strong>${Math.abs(growthPct)}% behind</strong> last year's pace. `+
+  `The forecast (<strong>${fmt(projFY26)}</strong>) is a stretch goal: +5%/month from ${MONTHS[lastActualIdx]} to push toward, not a run-rate.`;
 
 // ── SUMMARY: flags (computed from real data) ────────────────────────────
 const flags = [];
@@ -274,12 +284,12 @@ if (growthYTD < -0.05) flags.push({type:'danger', text:
   `<strong>2026 is pacing ${Math.abs(growthPct)}% behind 2025.</strong> ${fmt(ytd26)} collected through ${MONTHS[me-1]} vs ${fmt(ytd25)} by this point last year — a ${fmt(ytd25-ytd26)} gap. Every month Apr–Jun came in under the prior year.`});
 flags.push({type:'ok', text:
   `<strong>${MONTHS[bestMonthIdx]} was your strongest month of 2026</strong> at ${fmt(y[2026][bestMonthIdx])} cash collected. ${DATA.lastClosedMonthName.split(' ')[0]} closed at ${fmt(lastClosed)}.`});
+flags.push({type:'insight', text:
+  `<strong>Goal forecast:</strong> at +5%/month from ${MONTHS[lastActualIdx]}, 2026 targets <strong>${fmt(projFY26)}</strong> — just above 2025's ${fmt(annual[2025])}. That's the number to push toward; the current run-rate is behind it, so H2 has to beat H1.`});
 flags.push({type:'warn', text:
-  `<strong>${fmt(DATA.arOwed)} is owed to you</strong> (A/R), ${fmt(DATA.arOverdue)} of it overdue. ${DATA.arGhostNote} Collecting the real balance would materially close the pace gap.`});
+  `<strong>${fmt(DATA.arOwed)} shows as owed to you</strong>, but that figure is usually inflated by ghost invoices and small unaccounted leftovers. ${DATA.arGhostNote} Open the A/R line on the "This Year" tab to see what's actually outstanding.`});
 flags.push({type:'insight', text:
-  `<strong>Seasonality:</strong> H1 has historically outrun H2 (2025 was ${fmt(ytd25)} H1 vs ${fmt(annual[2025]-ytd25)} H2). With the year already running light, building pipeline now is the lever — the projection above assumes H2 mirrors H1's shortfall.`});
-flags.push({type:'insight', text:
-  `<strong>Bills you owe:</strong> only ${fmt(DATA.apOwed)} in payables — you are not cash-squeezed on the A/P side. The story this year is top-line sales, not cost.`});
+  `<strong>Bills you owe:</strong> only ${fmt(DATA.apOwed)} in payables — no A/P squeeze. This year's story is top-line sales, not cost.`});
 document.getElementById('sum-flags').innerHTML = flags.map(f=>`<div class="flag ${f.type}">${f.text}</div>`).join('');
 
 // ── THIS YEAR: 2026 vs 2025 monthly bars ────────────────────────────────
@@ -302,12 +312,18 @@ document.getElementById('cust-body').innerHTML =
   `<tr class="total"><td>Top customers total</td><td class="r green">${fmtD(custTotal)}</td></tr>`;
 
 // ── THIS YEAR: money position ───────────────────────────────────────────
-document.getElementById('pos-body').innerHTML = [
-  ['Cash in the bank', DATA.cashOnHand, 'navy'],
-  ['Owed to you (A/R)', DATA.arOwed, 'green'],
-  ['— of which overdue', DATA.arOverdue, 'amber'],
-  ['Bills you owe (A/P)', DATA.apOwed, 'red'],
-].map(([l,v,c])=>`<tr><td>${l}</td><td class="r ${c}">${fmt(v)}</td></tr>`).join('');
+const moreOpen = (DATA.arAwaitingCount + DATA.arOverdueCount) - DATA.arOpenTop.length;
+document.getElementById('pos-body').innerHTML =
+  `<tr id="ar-toggle" style="cursor:pointer"><td>Owed to you (A/R) &nbsp;<span id="ar-caret" style="color:#888;font-size:10px">&#9656; what's open</span></td><td class="r green">${fmt(DATA.arOwed)}</td></tr>` +
+  DATA.arOpenTop.map(o=>`<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#666">${o.inv} · ${o.who}${o.ghost?` &nbsp;<span style="color:#A32D2D">${o.age}d old · likely ghost</span>`:(o.note?` · ${o.note}`:'')}</td><td class="r" style="font-size:10px;color:#666">${fmt(o.amt)}</td></tr>`).join('') +
+  `<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#888">…and ${moreOpen} more open invoices — full itemized list arrives with the Monday worker (Xero invoice API)</td><td></td></tr>` +
+  `<tr><td style="color:#854F0B">— of which overdue</td><td class="r amber">${fmt(DATA.arOverdue)}</td></tr>` +
+  `<tr><td>Bills you owe (A/P)</td><td class="r red">${fmt(DATA.apOwed)}</td></tr>`;
+document.getElementById('ar-toggle').addEventListener('click', () => {
+  const hidden = document.querySelector('.ar-detail').style.display === 'none';
+  document.querySelectorAll('.ar-detail').forEach(r => r.style.display = hidden ? 'table-row' : 'none');
+  document.getElementById('ar-caret').innerHTML = (hidden ? '&#9662;' : '&#9656;') + " what's open";
+});
 document.getElementById('month-note').textContent =
   'Customer breakdown = cash received in '+DATA.lastClosedMonthName+' (top payers). Per-invoice detail and Profit First bucket balances live in the Profit First Ledger.';
 
@@ -319,7 +335,7 @@ let rows='';
 MONTHS.forEach((m,i)=>{
   const cells = YEARS.map(yr=>{
     let v = y[yr][i], cls='r', style='';
-    if (yr===2026 && v==null && y[2025][i]!=null){ v = Math.round(y[2025][i]*paceFactor); style='color:#999;font-style:italic'; }
+    if (yr===2026 && v==null && goalFor(i)!=null){ v = Math.round(goalFor(i)); style='color:#999;font-style:italic'; }
     else if (yr===2026 && v!=null){ style='color:#0F6E56;font-weight:600'; }
     return `<td class="${cls}" style="${style}">${v!=null?fmt(v):'—'}</td>`;
   }).join('');
@@ -347,7 +363,7 @@ document.getElementById('yoy-body').innerHTML = rows;
 
 document.getElementById('yoy-note').innerHTML =
   `2020–2024 from Eridion's historical table; 2025–2026 from Xero (cash basis). 2023 cross-checks against Xero to within $466, confirming both are on the same footing. `+
-  `2026 <em>Jul–Dec are projections</em> (2025 same-month × current YTD pace of ${Math.round(paceFactor*100)}%), shown in grey italic. `+
+  `2026 <em>Jul–Dec are goal targets</em> — +5%/month from ${MONTHS[lastActualIdx]}'s actual, to push the year (grey italic), not a run-rate projection. `+
   `The $992k "2025" column in the old sheet was a goal, not actuals — real 2025 was ${fmt(annual[2025])}.`;
 
 // ── TABS ────────────────────────────────────────────────────────────────
