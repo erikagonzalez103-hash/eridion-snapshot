@@ -1,21 +1,27 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
-<head> 
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eridion Glass — Weekly Snapshot</title>
+<title>Eridion Glass — Financial Snapshot</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F5F7;color:#1a1a1a;font-size:13px}
-.wrap{max-width:960px;margin:0 auto;padding:16px}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
 .snap{background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
 .snap-hdr{background:#0D1B2A;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .snap-brand{font-size:14px;font-weight:600;color:#fff;letter-spacing:.3px}
-.snap-meta{font-size:11px;color:#C8963E}
-.snap-actions{display:flex;gap:8px}
+.snap-meta{font-size:11px;color:#C8963E;margin-top:2px}
+.snap-actions{display:flex;gap:8px;align-items:center}
 .btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .12s}
 .btn-print{background:#C8963E;color:#0D1B2A}
 .btn-print:hover{background:#E8A84E}
+.btn-refresh{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn-refresh:hover{background:rgba(255,255,255,.1);border-color:#fff}
+.src-badge{background:#E1F5EE;color:#0F6E56;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:600}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0D1B2A;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s;z-index:200;max-width:340px;line-height:1.5}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast strong{color:#C8963E}
 .tab-bar{display:flex;border-bottom:1px solid #e0e0e0;background:#F8F9FA;overflow-x:auto}
 .tab{padding:11px 18px;font-size:12px;font-weight:500;color:#666;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .12s}
 .tab:hover{color:#0D1B2A;background:#fff}
@@ -24,25 +30,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tab-content.active{display:block}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
 .metric{background:#F8F9FA;border-radius:8px;padding:13px;text-align:center;border:1px solid #eee}
-.metric .val{font-size:22px;font-weight:600;line-height:1.2}
+.metric .val{font-size:21px;font-weight:600;line-height:1.2}
 .metric .lbl{font-size:10px;color:#888;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
-.metric .sub{font-size:9px;color:#aaa;margin-top:2px}
+.metric .sub{font-size:9px;color:#aaa;margin-top:3px;line-height:1.3}
 .green{color:#0F6E56}.red{color:#A32D2D}.amber{color:#854F0B}.navy{color:#0D1B2A}
 .slbl{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 7px}
 .flags{display:flex;flex-direction:column;gap:5px}
-.flag{padding:8px 12px;border-radius:6px;font-size:11px;font-weight:500;line-height:1.5}
+.flag{padding:9px 12px;border-radius:6px;font-size:11px;font-weight:500;line-height:1.5}
 .flag.danger{background:#FCEBEB;color:#791F1F;border-left:3px solid #E24B4A}
 .flag.warn{background:#FAEEDA;color:#633806;border-left:3px solid #BA7517}
 .flag.ok{background:#E1F5EE;color:#085041;border-left:3px solid #1D9E75}
 .flag.insight{background:#EEEDFE;color:#26215C;border-left:3px solid #534AB7}
-.prog-wrap{background:#F0F0F2;border-radius:6px;height:18px;overflow:visible;margin:5px 0;position:relative}
+.prog-wrap{background:#F0F0F2;border-radius:6px;height:20px;overflow:visible;margin:6px 0;position:relative}
 .prog-fill{height:100%;border-radius:6px;transition:width .3s ease;position:relative;z-index:1}
 .prog-pace{position:absolute;top:-4px;bottom:-4px;width:2px;background:#0D1B2A;z-index:2;pointer-events:none}
-.prog-pace::after{content:attr(data-label);position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:#0D1B2A;white-space:nowrap;background:#fff;padding:1px 4px;border-radius:3px;border:1px solid #0D1B2A}
-.prog-fill.green{background:#1D9E75}
-.prog-fill.amber{background:#C8963E}
-.prog-fill.red{background:#A32D2D}
-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.prog-pace::after{content:attr(data-label);position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:#0D1B2A;white-space:nowrap;background:#fff;padding:1px 4px;border-radius:3px;border:1px solid #0D1B2A}
+.prog-fill.green{background:#1D9E75}.prog-fill.amber{background:#C8963E}.prog-fill.red{background:#A32D2D}
 table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
 th{text-align:left;padding:7px 9px;font-size:10px;font-weight:600;color:#fff;background:#0D1B2A;letter-spacing:.04em}
 th.r{text-align:right}
@@ -50,25 +53,21 @@ td{padding:7px 9px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
 td.r{text-align:right;font-variant-numeric:tabular-nums}
 tr:nth-child(even) td{background:#FAFAFA}
 tr.total td{background:#F4F5F7;font-weight:600;border-top:2px solid #C8963E}
-tr.overdue td{background:#FCEBEB}
-tr.warn-row td{background:#FAEEDA}
-tr.proj td{color:#888;font-style:italic}
-tr.cur-month td{background:#E1F5EE;font-weight:500}
+tr.proj td{color:#999;font-style:italic}
+tr.cur-year td{background:#FBF3E2}
 tr.yoy-total td{background:#0D1B2A;color:#C8963E;font-weight:600}
-.cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.section-card{border:1px solid #eee;border-radius:8px;overflow:hidden}
-.section-card-hdr{background:#F4F5F7;padding:9px 12px;font-size:10px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #eee}
-.ai-block{background:#EEEDFE;border:1px solid #AFA9EC;border-radius:8px;padding:14px;margin-bottom:14px}
-.ai-block-hdr{font-size:11px;font-weight:600;color:#3C3489;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ai-insight{font-size:11px;color:#26215C;line-height:1.65;margin-bottom:6px;padding-left:10px;border-left:2px solid #7F77DD}
-.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:600}
-.badge-green{background:#E1F5EE;color:#0F6E56}
-.badge-red{background:#FCEBEB;color:#A32D2D}
-.badge-amber{background:#FAEEDA;color:#854F0B}
-.badge-purple{background:#EEEDFE;color:#534AB7}
+tr.yoy-total td.r{color:#C8963E}
+.bars{display:flex;align-items:flex-end;gap:6px;height:120px;padding:6px 0;border-bottom:1px solid #eee;margin-bottom:4px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar{width:70%;background:#1D9E75;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s}
+.bar.prior{background:#C9CDD3}
+.bar-lbl{font-size:9px;color:#888;margin-top:4px}
+.bar-val{font-size:9px;color:#555;margin-bottom:3px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;font-size:10px;color:#888;margin:8px 0}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
 .footer{background:#F4F5F7;padding:10px 20px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee}
-
-/* ── PRINT STYLES ── */
+.note{font-size:10px;color:#aaa;margin-top:8px;line-height:1.5}
 @media print{
   body{background:#fff;font-size:10px}
   .wrap{padding:0;max-width:100%}
@@ -77,16 +76,8 @@ tr.yoy-total td{background:#0D1B2A;color:#C8963E;font-weight:600}
   .tab-bar{display:none}
   .tab-content{display:block!important;padding:12px 16px;page-break-inside:avoid}
   .tab-content::before{content:attr(data-title);display:block;font-size:13px;font-weight:600;color:#0D1B2A;padding:8px 0 4px;border-bottom:2px solid #C8963E;margin-bottom:12px}
-  .tab-content+.tab-content{border-top:2px solid #0D1B2A;margin-top:0}
-  .metrics{grid-template-columns:repeat(4,1fr)}
-  .metric .val{font-size:16px}
-  .cf-grid{grid-template-columns:1fr 1fr}
-  .ai-block{page-break-inside:avoid}
-  .snap-hdr{padding:10px 16px}
-  .snap-brand{font-size:12px}
-  table{page-break-inside:auto}
+  .tab-content+.tab-content{border-top:2px solid #0D1B2A}
   tr{page-break-inside:avoid}
-  .prog-wrap{height:5px}
   @page{size:letter;margin:0.6in 0.5in}
 }
 </style>
@@ -95,1030 +86,277 @@ tr.yoy-total td{background:#0D1B2A;color:#C8963E;font-weight:600}
 <div class="wrap">
 <div class="snap">
 
-<!-- HEADER -->
 <div class="snap-hdr">
   <div>
-    <div class="snap-brand">ERIDION GLASS — Weekly Financial Snapshot</div>
-    <div style="display:flex;align-items:center;gap:8px"><div class="snap-meta" id="hdr-meta">Loading...</div><span id="data-indicator"></span></div>
+    <div class="snap-brand">ERIDION GLASS — Financial Snapshot</div>
+    <div class="snap-meta" id="hdr-meta">Loading…</div>
   </div>
   <div class="snap-actions">
-    <button class="btn btn-lock" id="lock-btn" type="button" style="display:none">Lock month: $—</button>
+    <span class="src-badge" id="src-badge">Xero · cash basis</span>
+    <button class="btn btn-refresh" id="refresh-btn" title="Copies the phrase to refresh these numbers">&#8635; Refresh</button>
     <button class="btn btn-print" onclick="window.print()">Print / Save PDF</button>
   </div>
 </div>
 
-<!-- TABS -->
 <div class="tab-bar">
-  <div class="tab active" onclick="switchTab('summary')">Summary</div>
-  <div class="tab" onclick="switchTab('sales')">Sales</div>
-  <div class="tab" onclick="switchTab('cashflow')">Cash Flow</div>
+  <div class="tab active" onclick="switchTab('summary',this)">Summary</div>
+  <div class="tab" onclick="switchTab('month',this)">This Year</div>
+  <div class="tab" onclick="switchTab('yoy',this)">YOY Sales</div>
 </div>
 
-<!-- TAB: SUMMARY -->
+<!-- SUMMARY -->
 <div class="tab-content active" id="tab-summary" data-title="Executive Summary">
   <div class="metrics" id="sum-metrics"></div>
-  <div class="slbl">April forecast</div>
+
+  <div class="slbl">2026 vs last year — sales collected year to date</div>
   <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:3px">
-    <span id="fc-mtd"></span><span id="fc-proj" class="amber"></span><span id="fc-tgt"></span>
+    <span id="fc-ytd"></span><span id="fc-proj" class="amber"></span><span id="fc-goal"></span>
   </div>
-  <div class="prog-wrap"><div class="prog-fill green" id="fc-bar" style="width:0%"></div><div class="prog-pace" id="fc-pace" style="display:none"></div></div>
-  <div style="font-size:10px;color:#aaa;margin-top:3px" id="fc-sub"></div>
-  <div class="slbl" style="margin-top:16px">Flags & action items</div>
+  <div class="prog-wrap"><div class="prog-fill" id="fc-bar" style="width:0%"></div><div class="prog-pace" id="fc-pace" style="display:none"></div></div>
+  <div style="font-size:10px;color:#aaa;margin-top:4px" id="fc-sub"></div>
+
+  <div class="slbl" style="margin-top:18px">Flags &amp; what needs attention</div>
   <div class="flags" id="sum-flags"></div>
 </div>
 
-<!-- TAB: SALES -->
-<div class="tab-content" id="tab-sales" data-title="Sales — Invoices Collected">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div style="font-size:12px;color:#555">Monthly goal: <strong id="sales-goal" class="navy"></strong></div>
-    <div style="font-size:12px;font-weight:500" id="sales-summary"></div>
+<!-- THIS YEAR -->
+<div class="tab-content" id="tab-month" data-title="This Year — Monthly Detail">
+  <div class="slbl" style="margin-top:0">2026 monthly sales vs 2025 (cash collected)</div>
+  <div class="bars" id="year-bars"></div>
+  <div class="legend">
+    <span><i class="dot" style="background:#1D9E75"></i> 2026 actual</span>
+    <span><i class="dot" style="background:#C9CDD3"></i> 2025</span>
   </div>
+
+  <div class="slbl" style="margin-top:16px">Who paid you last month (<span id="cust-month">June</span>)</div>
   <table>
-    <thead><tr>
-      <th style="width:13%">Invoice</th>
-      <th style="width:12%">Builder</th>
-      <th style="width:34%">Address / Job</th>
-      <th class="r" style="width:18%">Amount</th>
-      <th style="width:14%">Date Paid</th>
-      <th style="width:9%">Status</th>
-    </tr></thead>
-    <tbody id="sales-body"></tbody>
+    <thead><tr><th style="width:60%">Customer</th><th class="r" style="width:40%">Paid</th></tr></thead>
+    <tbody id="cust-body"></tbody>
   </table>
-  <div style="margin-top:10px;font-size:10px;color:#888;text-align:right">
-    Weekly pace needed to hit target: <strong class="navy" id="weekly-needed"></strong>
-  </div>
+
+  <div class="slbl" style="margin-top:16px">Money position right now</div>
+  <table>
+    <tbody id="pos-body"></tbody>
+  </table>
+  <div class="note" id="month-note"></div>
 </div>
 
-<!-- TAB: CASH FLOW -->
-<div class="tab-content" id="tab-cashflow" data-title="Cash Flow — Weekly + Invoices Owed">
-  <div class="slbl" style="margin-top:0">Weekly cash flow</div>
-  <table style="margin-bottom:16px">
-    <thead><tr>
-      <th style="width:28%">Category</th>
-      <th class="r" style="width:18%">Apr 2</th>
-      <th class="r" style="width:18%">Apr 9</th>
-      <th class="r" style="width:18%">Apr 16</th>
-      <th class="r" style="width:18%">Apr 23</th>
-    </tr></thead>
-    <tbody id="cf-weekly"></tbody>
-  </table>
-
-  <div class="cf-grid">
-    <div>
-      <div class="slbl" style="margin-top:0">Profit First balances</div>
-      <table><thead><tr><th>Account</th><th class="r">Balance</th><th class="r">Target %</th></tr></thead>
-      <tbody id="pf-body"></tbody></table>
-    </div>
-    <div>
-      <div class="slbl" style="margin-top:0">Materials this week</div>
-      <table><thead><tr><th>Vendor</th><th class="r">Amount</th></tr></thead>
-      <tbody id="mat-body"></tbody></table>
-    </div>
-  </div>
-
-  <div class="slbl" style="margin-top:16px">Invoices we owe (from Order Tracker)</div>
-  <table>
-    <thead><tr>
-      <th style="width:16%">Invoice #</th>
-      <th style="width:28%">Vendor</th>
-      <th style="width:16%">PO Ref</th>
-      <th class="r" style="width:16%">Amount</th>
-      <th style="width:12%">Due</th>
-      <th style="width:12%">Status</th>
-    </tr></thead>
-    <tbody id="owe-body"></tbody>
-  </table>
-  <div style="margin-top:8px;font-size:10px;color:#aaa">* Pulled from Order Tracker — sync each Friday after SG PO upload</div>
-</div>
-
-<!-- TAB: YOY -->
-<div class="tab-content" id="tab-yoy" data-title="Year-Over-Year Revenue + 2026 Forecast">
-  <div class="ai-block" id="ai-insights">
-    <div class="ai-block-hdr">
-      <span style="font-size:14px">✦</span> Francisco — pattern insights for 2026
-    </div>
-    <div id="ai-insights-body"></div>
-  </div>
+<!-- YOY -->
+<div class="tab-content" id="tab-yoy" data-title="Year-Over-Year Sales (cash basis)">
   <div style="overflow-x:auto">
     <table id="yoy-table">
       <thead><tr id="yoy-hdr"></tr></thead>
       <tbody id="yoy-body"></tbody>
     </table>
   </div>
-  <div style="margin-top:10px;font-size:10px;color:#aaa">
-    * 2026 projected months based on 2025 pace adjusted for YTD growth rate (currently +17% over 2025 pace). Italicized = projected.
-  </div>
+  <div class="note" id="yoy-note"></div>
 </div>
 
-<div class="footer" id="snap-footer">Generated by Francisco · Eridion Glass LLC · For internal use only</div>
+<div class="footer" id="snap-footer"></div>
 </div>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ── LIVE DATA FETCH ──────────────────────────────────────────────────
-const WORKER_URL = 'https://frosty-base-f01e.erikagonzalez103.workers.dev';
-let LIVE_DATA = null;
-
-async function loadLiveData() {
-  const indicator = document.getElementById('data-indicator');
-  try {
-    const resp = await fetch(WORKER_URL + '/snapshot/v2/data');
-    if (!resp.ok) throw new Error('Worker returned ' + resp.status);
-    LIVE_DATA = await resp.json();
-    if (indicator) indicator.innerHTML = '<span style="background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500">Live data</span>';
-    applyLiveData(LIVE_DATA);
-  } catch(err) {
-    console.log('Live data unavailable, using sample data:', err.message);
-    if (indicator) indicator.innerHTML = '<span style="background:#FAEEDA;color:#854F0B;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500">Sample data</span>';
-  }
-}
-
-function applyLiveData(d) {
-  if (!d) return;
-  // Update header
-  const meta = document.getElementById('hdr-meta');
-  if (meta) meta.textContent = 'Week of ' + d.weekLabel + '  ·  Report: ' + new Date(d.generated).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-
-  // ── Compute week-relative counts (sample data hardcodes "5 invoices paid"
-  //    but with live data we want week count + MTD count to actually reflect reality)
-  const weekStart = (d.weekLabel || '').split(' – ')[0];  // "2026-05-04 – 2026-05-04" -> "2026-05-04"
-  const weekInvCount = (d.salesList || []).filter(s => s.date && s.date >= weekStart).length;
-  const mtdInvCount = (d.salesList || []).length;
-
-  // Update metrics + subtitles
-  const cards = document.querySelectorAll('.metric');
-  if (cards[0]) {
-    const v = cards[0].querySelector('.val');
-    const s = cards[0].querySelector('.sub');
-    if (v) { v.textContent = fmt(d.weekRevenue); v.className = 'val green'; }
-    if (s) s.textContent = weekInvCount + (weekInvCount === 1 ? ' invoice this week' : ' invoices this week');
-  }
-  if (cards[1]) {
-    const v = cards[1].querySelector('.val');
-    if (v) { const net = d.weekRevenue - (d.weekExpenses||0); v.textContent = fmt(net); v.className = 'val ' + (net>=0?'green':'red'); }
-  }
-  if (cards[2]) {
-    const v = cards[2].querySelector('.val');
-    const s = cards[2].querySelector('.sub');
-    if (v) v.textContent = fmt(d.mtdRevenue);
-    if (s) s.textContent = mtdInvCount + (mtdInvCount === 1 ? ' invoice · ' : ' invoices · ') + 'goal: ' + fmt(d.monthlyTarget);
-  }
-  if (cards[3]) {
-    // Total Cash — sum of bank balances from Xero BankSummary.
-    // Was previously stuck at the hardcoded sample value ($81,820) because
-    // applyLiveData only touched cards 0–2. If the worker returns no value
-    // (cash report unavailable, Xero down, etc.) we leave the sample in
-    // place rather than show a $0 that would be misleading.
-    if (d.totalCash != null) {
-      const v = cards[3].querySelector('.val');
-      const s = cards[3].querySelector('.sub');
-      if (v) v.textContent = fmt(d.totalCash);
-      if (s && Array.isArray(d.cashAccounts)) {
-        const n = d.cashAccounts.length;
-        s.textContent = n + (n === 1 ? ' account' : ' accounts') + (n === 8 ? ' · all 8 PF buckets' : '');
-      }
-    }
-  }
-
-  // ── Forecast bar with pace tick showing where you "should" be by today
-  //    Pace = (days elapsed / days in month) × monthly target.
-  //    Bar = revenue achieved as % of target. Color: green if at/ahead pace,
-  //    amber if within 15% behind, red if more than 15% behind.
-  const fcPct = Math.min(Math.round(d.mtdRevenue / d.monthlyTarget * 100), 100);
-  const pacePct = d.daysInMonth ? Math.round((d.daysElapsed / d.daysInMonth) * 100) : 0;
-  const fcBar = document.getElementById('fc-bar');
-  if (fcBar) {
-    fcBar.style.width = fcPct + '%';
-    fcBar.classList.remove('green','amber','red');
-    if (fcPct >= pacePct) fcBar.classList.add('green');
-    else if (pacePct - fcPct <= 15) fcBar.classList.add('amber');
-    else fcBar.classList.add('red');
-  }
-  const fcPace = document.getElementById('fc-pace');
-  if (fcPace && pacePct > 0 && pacePct < 100) {
-    fcPace.style.display = 'block';
-    fcPace.style.left = pacePct + '%';
-    fcPace.setAttribute('data-label', 'Day ' + d.daysElapsed + ' pace');
-  } else if (fcPace) {
-    fcPace.style.display = 'none';
-  }
-  const fcMtd = document.getElementById('fc-mtd');
-  if (fcMtd) fcMtd.textContent = 'MTD: ' + fmt(d.mtdRevenue);
-  const fcProj = document.getElementById('fc-proj');
-  if (fcProj) fcProj.textContent = 'Projected EOM: ' + fmt(d.projectedEOM);
-  const fcSub = document.getElementById('fc-sub');
-  if (fcSub) {
-    const expected = Math.round(d.monthlyTarget * (d.daysElapsed / d.daysInMonth));
-    const paceDelta = d.mtdRevenue - expected;
-    const paceText = paceDelta >= 0 ? '+' + fmt(paceDelta) + ' ahead of pace' : fmt(Math.abs(paceDelta)) + ' behind pace';
-    fcSub.textContent = fcPct + '% of target · ' + d.daysRemaining + ' days remaining · ' + paceText;
-  }
-
-  // ── Filter Xero noise BEFORE rendering anything that depends on bills/orders.
-  //    These rules apply globally to flags, the Cash Flow A/P table, anywhere
-  //    bill data appears. Goal: nothing on screen unless it's something Erika
-  //    might actually need to act on.
-  //
-  //    GENERAL RULE: anything 90+ days past due is filtered.
-  //    Why: Xero has a recurring categorization bug that mis-flags A/R invoices
-  //    Erika sent to customers as A/P bills she owes. Tara cleans them, they
-  //    come back. Anything 90+ days old in A/P is virtually always one of these
-  //    ghosts. M3's legitimate aged invoices are already filtered separately
-  //    and tracked in the order tracker, so they don't conflict with this rule.
-  //
-  //    SECONDARY RULE: builder/customer name in the vendor field. Catches the
-  //    same Xero ghosts when they're less than 90 days old (still mistakes,
-  //    just newer ones). Also catches Gusto (legacy ghost, no longer used).
-  const NOW_MS = Date.now();
-  const NINETY_DAYS_MS = 90 * 86400000;
-  const CUSTOMER_VENDOR_PATTERNS = [
-    /\bgusto\b/i,
-    /\bgrand homes\b/i, /\bd\.?r\.? horton\b/i, /\bdrhorton\b/i,
-    /\bhines homes\b/i, /\bhines\b/i, /\bdrees\b/i, /\bgutman\b/i,
-    /\blingenfelter\b/i, /\bmartyn hammer\b/i, /\bamanda beard\b/i,
-    /\bdesco\b/i, /\bpennington\b/i, /\bpreston trail\b/i,
-    /\bshawn harned\b/i, /\blongacre\b/i, /\brausch coleman\b/i,
-    /\bnylo\b/i, /\byahalom\b/i,
-  ];
-
-  // Returns true if a bill row should be HIDDEN
-  const isNoiseBill = (b) => {
-    // Rule 1: 90+ days past due → hide
-    if (b.due) {
-      const dueMs = new Date(b.due + 'T00:00:00').getTime();
-      if (!isNaN(dueMs) && (NOW_MS - dueMs) > NINETY_DAYS_MS) return true;
-    }
-    // Rule 2: vendor name matches a known customer/legacy ghost → hide
-    const vendor = (b.vendor || '').toString();
-    if (CUSTOMER_VENDOR_PATTERNS.some(re => re.test(vendor))) return true;
-    return false;
-  };
-
-  // Build a set of invoice numbers that are noise — used to filter flags by
-  // matching their text against the underlying bill list. This is the bridge
-  // between "the data" and "the natural-language flag strings" the worker
-  // generates.
-  const noiseInvNums = new Set();
-  [...(d.billsOwed || []), ...(d.openOrders || [])].forEach(b => {
-    if (isNoiseBill(b)) {
-      if (b.inv && b.inv !== '—') noiseInvNums.add(String(b.inv).toLowerCase());
+// ── Refresh button: copies the phrase for Claude to refresh the data.
+//    A static page can't message Claude directly, so this puts the exact
+//    ask on the clipboard — paste it into your Claude chat and the numbers
+//    get re-pulled from Xero and rebuilt.
+(function(){
+  const btn=document.getElementById('refresh-btn'), toast=document.getElementById('toast');
+  function showToast(html){toast.innerHTML=html;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),5200);}
+  btn.addEventListener('click', async ()=>{
+    const phrase='refresh my snapshot';
+    try{ await navigator.clipboard.writeText(phrase);
+      showToast('Copied <strong>"refresh my snapshot"</strong> — paste it into your Claude chat and I\'ll re-pull Xero and update these numbers.');
+    }catch(e){
+      showToast('Tell Claude: <strong>"refresh my snapshot"</strong> — I\'ll re-pull Xero and update these numbers. (Clipboard was blocked.)');
     }
   });
-
-  // ── Flags: drop any flag whose text references a noise bill, OR whose vendor
-  //    name is itself a customer pattern (catches flags where the worker
-  //    didn't include the inv# in the message).
-  const flagsEl = document.getElementById('sum-flags');
-  if (flagsEl && d.flags) {
-    let flags = (d.flags || []).filter(f => {
-      const t = (f.text || '').toLowerCase();
-      // Customer-named in flag text → drop
-      if (CUSTOMER_VENDOR_PATTERNS.some(re => re.test(t))) return false;
-      // Flag mentions an invoice number we already classified as noise → drop
-      for (const inv of noiseInvNums) { if (inv && t.includes(inv)) return false; }
-      return true;
-    });
-    // Sort danger first, then warn, then ok; keep most urgent visible
-    const sortKey = { danger: 0, warn: 1, ok: 2, insight: 3 };
-    flags.sort((a,b) => (sortKey[a.type] ?? 9) - (sortKey[b.type] ?? 9));
-    // Cap to top 7 dangerous/warn items + always keep "ok"/insight pacing flags
-    const dangerWarn = flags.filter(f => f.type === 'danger' || f.type === 'warn').slice(0, 7);
-    const okFlags = flags.filter(f => f.type === 'ok' || f.type === 'insight');
-    flags = [...dangerWarn, ...okFlags];
-    flagsEl.innerHTML = flags.length
-      ? flags.map(f => '<div class="flag ' + f.type + '">' + f.text + '</div>').join('')
-      : '<div class="flag ok">No outstanding A/P alerts. Inbox is clean.</div>';
-  }
-  // Update sales table
-  if (d.salesList && d.salesList.length) {
-    const sb = document.getElementById('sales-body');
-    if (sb) {
-      sb.innerHTML = d.salesList.map((s,i) =>
-        '<tr><td style="font-family:monospace;font-size:10px">' + s.inv + '</td>' +
-        '<td><span class="badge badge-green">' + s.contact + '</span></td>' +
-        '<td style="font-size:10px;color:#666">' + s.ref + '</td>' +
-        '<td class="r">' + fmtD(s.amt) + '</td>' +
-        '<td style="font-size:10px;color:#888">' + s.date + '</td>' +
-        '<td><span class="badge badge-green">Paid</span></td></tr>'
-      ).join('') +
-      '<tr class="total"><td colspan="3">Total collected this month</td>' +
-      '<td class="r green">' + fmtD(d.mtdRevenue) + '</td>' +
-      '<td colspan="2" class="green">vs target: ' + fmt(d.monthlyTarget) + '</td></tr>';
-    }
-    const salesGoal = document.getElementById('sales-goal');
-    if (salesGoal) salesGoal.textContent = fmt(d.monthlyTarget);
-    const salesSum = document.getElementById('sales-summary');
-    const delta = d.mtdRevenue - d.monthlyTarget;
-    if (salesSum) salesSum.innerHTML = '<span class="' + (d.mtdRevenue>=d.monthlyTarget?'green':'amber') + '">' + fmt(d.mtdRevenue) + ' collected</span> <span style="color:#888">· ' + (delta>=0?'+':'') + fmt(delta) + ' vs target</span>';
-  }
-  // Update invoices owed table — same filter as flags (90-day + customer-name)
-  if (d.billsOwed || d.openOrders) {
-    const oweBody = document.getElementById('owe-body');
-    if (oweBody) {
-      const all = [...(d.billsOwed||[]), ...(d.openOrders||[])].filter(b => !isNoiseBill(b));
-      oweBody.innerHTML = all.map(b => {
-        const rowCls = b.overdue?'overdue':b.dueSoon?'warn-row':'';
-        const badgeCls = b.overdue?'badge-red':b.dueSoon?'badge-amber':'badge-green';
-        const badgeLbl = b.overdue?'OVERDUE':b.dueSoon?'DUE SOON':'ON TRACK';
-        return '<tr class="' + rowCls + '"><td style="font-family:monospace;font-size:10px">' + b.inv + '</td>' +
-          '<td>' + b.vendor + '</td><td style="font-size:10px;color:#888">' + (b.po||'—') + '</td>' +
-          '<td class="r">' + fmt(b.amt) + '</td><td style="font-size:10px">' + (b.due||'—') + '</td>' +
-          '<td><span class="badge ' + badgeCls + '">' + badgeLbl + '</span></td></tr>';
-      }).join('');
-    }
-  }
-}
-
-// ── SAMPLE DATA ──────────────────────────────────────────────────────
-// ── DATA ──────────────────────────────────────────────────────────────
-const WEEK_LABEL = 'April 13–17, 2026';
-const REPORT_DATE = 'Monday, April 20, 2026';
-const MONTH = 'April 2026';
-const MTD_REVENUE = 61200;
-const MTD_TARGET = 71750;
-const DAYS_ELAPSED = 17;
-const DAYS_REMAINING = 13;
-const DAYS_IN_MONTH = 30;
-
-const WEEK_REVENUE = 73490;
-const WEEK_EXPENSES = 31231;
-
-const fmt = n => n != null ? '$' + Math.round(n).toLocaleString() : '—';
-const fmtD = n => n != null ? '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '—';
-const pct = (a,b) => b ? Math.round(a/b*100) : 0;
-
-// Set header
-document.getElementById('hdr-meta').textContent = 'Week of ' + WEEK_LABEL + '  ·  Report: ' + REPORT_DATE;
-document.getElementById('snap-footer').textContent = 'Generated by Francisco · Eridion Glass LLC · ' + REPORT_DATE + ' · For internal use only';
-
-// ── SUMMARY ───────────────────────────────────────────────────────────
-const MTD_PROJ = MTD_REVENUE + (MTD_REVENUE / DAYS_ELAPSED * DAYS_REMAINING);
-const WEEK_NET = WEEK_REVENUE - WEEK_EXPENSES;
-
-document.getElementById('sum-metrics').innerHTML = [
-  {val: fmt(WEEK_REVENUE), lbl: 'Week Revenue', sub: '5 invoices paid', cls: 'green'},
-  {val: fmt(WEEK_NET), lbl: 'Week Net', sub: 'after materials & subs', cls: WEEK_NET > 0 ? 'green' : 'red'},
-  {val: fmt(MTD_REVENUE), lbl: 'MTD Actual', sub: 'of ' + fmt(MTD_TARGET) + ' target', cls: 'navy'},
-  {val: fmt(81820), lbl: 'Total Cash', sub: 'all 8 PF accounts', cls: 'navy'},
-].map(m => `<div class="metric"><div class="val ${m.cls}">${m.val}</div><div class="lbl">${m.lbl}</div><div class="sub">${m.sub}</div></div>`).join('');
-
-const fcPct = pct(MTD_REVENUE, MTD_TARGET);
-document.getElementById('fc-mtd').textContent = 'MTD: ' + fmt(MTD_REVENUE);
-document.getElementById('fc-proj').textContent = 'Projected EOM: ' + fmt(MTD_PROJ);
-document.getElementById('fc-tgt').textContent = 'Target: ' + fmt(MTD_TARGET);
-document.getElementById('fc-bar').style.width = Math.min(fcPct, 100) + '%';
-document.getElementById('fc-sub').textContent = fcPct + '% of target reached · ' + DAYS_REMAINING + ' days remaining · on pace to exceed';
-
-document.getElementById('sum-flags').innerHTML = [
-  {type:'danger', text:'Pennington invoice — $3,600 overdue 8 days. Confirm check mailed or request reissue. (Added to Monday.com)'},
-  {type:'warn',   text:'FHC invoice #INV-4892 — $3,180 due Apr 19 in 2 days. Confirm payment queued from Materials bucket.'},
-  {type:'warn',   text:'IMP invoice #INV-7741 — $4,820 due Apr 22. Materials bucket (...6985) has $19,480 — covered.'},
-  {type:'ok',     text:'All 8 Profit First buckets funded. Beyond loan auto-pays Apr 23 — $361.09 from ...2017.'},
-  {type:'ok',     text:'April MTD at 85% of goal with 13 days left. Projected to close at ' + fmt(MTD_PROJ) + ' — above target.'},
-  {type:'insight',text:'Francisco: May historically runs 12% slower than April (2023–2025 avg). Consider pushing 2 additional builder estimates this week to build pipeline buffer.'},
-].map(f => `<div class="flag ${f.type}">${f.text}</div>`).join('');
-
-// ── SALES ─────────────────────────────────────────────────────────────
-const SALES = [
-  {inv:'2012',b:'HH', addr:'60 Lucia',                      amt:3451.22, date:'3-Mar',  paid:true},
-  {inv:'2013',b:'MH', addr:'4017 Parkside',                  amt:393.69,  date:'3-Mar',  paid:true},
-  {inv:'2014',b:'HD', addr:'Ryan Gordano',                   amt:1330.14, date:'3-Mar',  paid:true},
-  {inv:'2044',b:'DRH',addr:'30 Plantation',                  amt:1332.94, date:'5-Mar',  paid:true},
-  {inv:'2045',b:'DRH',addr:'28 Plantation',                  amt:1272.71, date:'6-Mar',  paid:true},
-  {inv:'2015',b:'GH', addr:'3533 Orion',                     amt:670.35,  date:'9-Mar',  paid:true},
-  {inv:'2016',b:'GH', addr:'3534 Orion',                     amt:1170.64, date:'9-Mar',  paid:true},
-  {inv:'2014',b:'GUT',addr:'63 Country',                     amt:8647.82, date:'16-Mar', paid:true},
-  {inv:'2040',b:'ABI',addr:'5924 Forest Ln',                 amt:1389.53, date:'17-Mar', paid:true},
-  {inv:'2034',b:'MJV',addr:'9000 Construction Pl',           amt:5183.16, date:'18-Mar', paid:true},
-  {inv:'2038',b:'HH', addr:'2207 Viera',                     amt:2112.54, date:'18-Mar', paid:true},
-  {inv:'2039',b:'HH', addr:'15307 Matterhorn',               amt:2772.62, date:'18-Mar', paid:true},
-  {inv:'2033',b:'DRH',addr:'840 Hackberry Showers',          amt:2168.66, date:'19-Mar', paid:true},
-  {inv:'2036',b:'DRH',addr:'840 Hackberry Mirrors',          amt:1443.22, date:'19-Mar', paid:true},
-  {inv:'2037',b:'DRH',addr:'3536 Ithaca Mirrors',            amt:1033.28, date:'19-Mar', paid:true},
-  {inv:'2041',b:'GH', addr:'830 Hackberry Mirrors',          amt:1094.99, date:'24-Mar', paid:true},
-  {inv:'2043',b:'DRH',addr:'3536 Ithaca Showers',            amt:1895.49, date:'24-Mar', paid:true},
-  {inv:'2046',b:'MJV',addr:'Hotworks Mirrors',               amt:3607.35, date:'24-Mar', paid:true},
-  {inv:'2055',b:'HO', addr:'8 Aspen Cove',                   amt:2243.61, date:'26-Mar', paid:true},
-  {inv:'2054',b:'Desco',addr:'6848 Meadowcreek',             amt:2651.85, date:'26-Mar', paid:true},
-  {inv:'2042',b:'GUT',addr:'3229 Tucson Oaks Mirrors',       amt:2494.07, date:'27-Mar', paid:true},
-  {inv:'2052',b:'DRH',addr:'860 Hackberry Mirrors',          amt:1681.90, date:'31-Mar', paid:true},
-  {inv:'2053',b:'DRH',addr:'860 Hackberry Showers',          amt:1890.30, date:'31-Mar', paid:true},
-  {inv:'2047',b:'DRH',addr:'821 Oleander Mirrors',           amt:1879.25, date:'31-Mar', paid:true},
-  {inv:'2048',b:'DRH',addr:'821 Oleander Showers',           amt:2132.74, date:'31-Mar', paid:true},
-  {inv:'2049',b:'DRH',addr:'381 Hibiscus Mirrors',           amt:2414.30, date:'31-Mar', paid:true},
-  {inv:'2050',b:'DRH',addr:'381 Hibiscus Showers',           amt:2660.74, date:'31-Mar', paid:true},
-];
-const salesTotal = SALES.reduce((s,r)=>s+r.amt,0);
-const delta = salesTotal - 55736.80;
-document.getElementById('sales-goal').textContent = fmtD(55736.80);
-document.getElementById('sales-summary').innerHTML = `<span class="green">${fmtD(salesTotal)} collected</span> <span style="color:#888">· ${delta>=0?'+':''}</span><span class="${delta>=0?'green':'red'}">${fmtD(Math.abs(delta))} ${delta>=0?'over':'under'} goal</span>`;
-document.getElementById('weekly-needed').textContent = '$20,000 / week';
-
-const sb = document.getElementById('sales-body');
-SALES.forEach(s => {
-  sb.innerHTML += `<tr><td style="font-family:monospace;font-size:10px">${s.inv}</td>
-    <td><span class="badge badge-green">${s.b}</span></td>
-    <td style="font-size:10px;color:#666">${s.addr}</td>
-    <td class="r">${fmtD(s.amt)}</td>
-    <td style="font-size:10px;color:#888">${s.date}</td>
-    <td><span class="badge badge-green">Paid</span></td></tr>`;
-});
-sb.innerHTML += `<tr class="total"><td colspan="3">Total collected this month</td><td class="r green">${fmtD(salesTotal)}</td><td colspan="2" class="green">+${fmtD(delta)} vs goal</td></tr>`;
-
-// ── CASH FLOW ─────────────────────────────────────────────────────────
-document.getElementById('cf-weekly').innerHTML = [
-  {lbl:'Weekly incoming',    v:[8426.90, 1840.99, 24750.83, null], cls:'green'},
-  {lbl:'Weekly outgoing',    v:[10677.79,8752.53, 6343.48,  null], cls:'red', neg:true},
-  {lbl:'Net',                v:[-2250.89,-6911.54,18407.35, null], total:true},
-].map(r => {
-  const cls = r.total ? 'total' : '';
-  const cells = r.v.map(v => {
-    if(v==null) return `<td class="r" style="color:#ccc">—</td>`;
-    const c = v<0?'red':r.cls||'';
-    const prefix = v<0?'(':'', suffix=v<0?')':'';
-    return `<td class="r ${c}">${prefix}${fmt(Math.abs(v))}${suffix}</td>`;
-  }).join('');
-  return `<tr class="${cls}"><td>${r.lbl}</td>${cells}</tr>`;
-}).join('');
-
-const PF = [
-  {n:'Income ...8936',    bal:18420, tgt:null,  note:'Distribute Tue/Thu'},
-  {n:"Profit ...6180",    bal:7780,  tgt:12.7,  note:''},
-  {n:"Owner's Comp ...7799",bal:6540,tgt:10.7,  note:''},
-  {n:'Tax Reserve ...8710',bal:10400,tgt:17.0,  note:''},
-  {n:'OPEX ...2122',      bal:8250,  tgt:13.5,  note:''},
-  {n:'Materials ...6985', bal:19480, tgt:31.8,  note:''},
-  {n:'Subs ...4814',      bal:8750,  tgt:14.3,  note:''},
-  {n:'Loan ...2017',      bal:2200,  tgt:null,  note:'Auto-pays Apr 23'},
-];
-const pfTotal = PF.reduce((s,b)=>s+b.bal,0);
-document.getElementById('pf-body').innerHTML = PF.map(b =>
-  `<tr><td>${b.n}</td><td class="r">${fmt(b.bal)}</td><td class="r" style="color:#aaa">${b.tgt?b.tgt+'%':'—'}</td></tr>`
-).join('') + `<tr class="total"><td>Total cash</td><td class="r green">${fmt(pfTotal)}</td><td class="r">—</td></tr>`;
-
-const MATS = [
-  {v:'Imperial (IMP)',amt:5192},{v:'FHC',amt:3180},{v:'Sky Building',amt:1072},
-  {v:'Waterfall',amt:856},{v:'Smart Glazier',amt:0},{v:'Credit Card',amt:647},
-];
-const matTotal = MATS.reduce((s,m)=>s+m.amt,0);
-document.getElementById('mat-body').innerHTML = MATS.map(m=>
-  `<tr><td>${m.v}</td><td class="r">${m.amt?fmt(m.amt):'—'}</td></tr>`
-).join('') + `<tr class="total"><td>Total materials</td><td class="r">${fmt(matTotal)}</td></tr>`;
-
-const OWE = [
-  {inv:'INV-4892',vendor:'FHC',       po:'26061-1', amt:3140, due:'Apr 19', flag:'overdue'},
-  {inv:'INV-7741',vendor:'Imperial',  po:'26058-1', amt:4820, due:'Apr 22', flag:'warn'},
-  {inv:'INV-2201',vendor:'Sky Building',po:'26055-2',amt:2890,due:'Apr 24', flag:'ok'},
-  {inv:'INV-9013',vendor:'Zuritex Glass',po:'Sub',  amt:4200, due:'Apr 25', flag:'ok'},
-  {inv:'INV-3304',vendor:'Citizens Glass',po:'Sub', amt:1800, due:'Apr 28', flag:'ok'},
-  {inv:'INV-8847',vendor:'Imperial',  po:'26063-1', amt:5200, due:'Apr 30', flag:'ok'},
-];
-document.getElementById('owe-body').innerHTML = OWE.map(o => {
-  const rowCls = o.flag==='overdue'?'overdue':o.flag==='warn'?'warn-row':'';
-  const badgeCls = o.flag==='overdue'?'badge-red':o.flag==='warn'?'badge-amber':'badge-green';
-  const badgeLbl = o.flag==='overdue'?'OVERDUE':o.flag==='warn'?'DUE SOON':'ON TRACK';
-  return `<tr class="${rowCls}"><td style="font-family:monospace;font-size:10px">${o.inv}</td>
-    <td>${o.vendor}</td><td style="font-size:10px;color:#888">${o.po}</td>
-    <td class="r">${fmt(o.amt)}</td><td style="font-size:10px">${o.due}</td>
-    <td><span class="badge ${badgeCls}">${badgeLbl}</span></td></tr>`;
-}).join('');
-
-// ── YOY ───────────────────────────────────────────────────────────────
-const YOY = [
-  {m:'January',   y20:null,      y21:1345.58,   y22:23202.44,  y23:27453.45,  y24:32763.11,  y25:58174.16,  y26a:46208.69},
-  {m:'February',  y20:null,      y21:2118.46,   y22:12310.16,  y23:20074.63,  y24:32324.72,  y25:73524.82,  y26a:56500},
-  {m:'March',     y20:null,      y21:8872.94,   y22:25692.91,  y23:17686.07,  y24:68312.19,  y25:56500.71,  y26a:61665},
-  {m:'April',     y20:null,      y21:18351.21,  y22:16945.45,  y23:19020.95,  y24:48943.87,  y25:52092.50,  y26a:61200},
-  {m:'May',       y20:7549.88,   y21:14365.71,  y22:13301.29,  y23:32038.42,  y24:62403.35,  y25:63332.74,  y26a:null},
-  {m:'June',      y20:6070.48,   y21:20700.22,  y22:26604.62,  y23:28305.08,  y24:48149.22,  y25:88678.48,  y26a:null},
-  {m:'July',      y20:null,      y21:31618.00,  y22:46778.69,  y23:null,      y24:55800.42,  y25:45582.37,  y26a:null},
-  {m:'August',    y20:4942.82,   y21:13543.38,  y22:25516.07,  y23:25874.67,  y24:25292.15,  y25:23601.05,  y26a:null},
-  {m:'September', y20:13260.02,  y21:12162.48,  y22:38179.73,  y23:27355.89,  y24:18986.46,  y25:67552.23,  y26a:null},
-  {m:'October',   y20:3859.18,   y21:15814.62,  y22:10914.15,  y23:33941.33,  y24:66186.87,  y25:52037.61,  y26a:null},
-  {m:'November',  y20:3336.47,   y21:6015.06,   y22:34125.00,  y23:23502.76,  y24:23832.76,  y25:51589.97,  y26a:null},
-  {m:'December',  y20:6395.92,   y21:32250.98,  y22:47167.49,  y23:20577.57,  y24:60840.91,  y25:34125.44,  y26a:null},
-];
-
-// Growth rate YTD 2026 vs 2025
-const mtd25 = YOY.slice(0,4).reduce((s,r)=>s+(r.y25||0),0);
-const mtd26 = YOY.slice(0,4).reduce((s,r)=>s+(r.y26a||0),0);
-const growthRate = mtd26/mtd25;
-
-// Project remaining 2026 months
-YOY.forEach(r => {
-  if(!r.y26a && r.y25) r.y26p = Math.round(r.y25 * growthRate);
-  else if(!r.y26a) r.y26p = null;
-});
-
-const totals = {y20:0,y21:0,y22:0,y23:0,y24:0,y25:0,y26a:0,y26p:0};
-YOY.forEach(r => {
-  ['y20','y21','y22','y23','y24','y25'].forEach(k=>{if(r[k])totals[k]+=r[k];});
-  if(r.y26a) totals.y26a += r.y26a;
-  if(r.y26p) totals.y26p += r.y26p;
-});
-
-// AI Insights
-const slowMonths = YOY.filter(r => r.y25 && r.y26p && r.y26p < 50000);
-const strongMonths = YOY.filter(r => r.y25 && r.y26p && r.y26p > 80000);
-const augSlump = YOY.find(r=>r.m==='August');
-const INSIGHTS = [
-  `<strong>May pipeline:</strong> May historically runs 8–12% lighter than April across 2023–2025. With ${DAYS_REMAINING} days left in April, pushing 2–3 additional builder estimates now builds the May buffer before it becomes a gap.`,
-  `<strong>June surge window:</strong> June 2025 was your strongest month at $88,678. FIFA World Cup group stage begins June 12 in Dallas — construction and hospitality activity will peak. This is your highest-leverage outreach window of the year.`,
-  `<strong>August historically soft:</strong> August 2024 dropped to $25,292 (vs $62,403 in May). This is a recurring pattern. Consider front-loading invoicing in late July and scheduling Dion's vacation in August rather than a peak month.`,
-  `<strong>2026 trajectory:</strong> At current pace (+17% over 2025 YTD), projected full-year revenue is ${fmt(totals.y26a + totals.y26p)} — ${(totals.y26a + totals.y26p) >= 1000000 ? 'on track to hit the $1MM milestone.' : 'approximately ' + fmt(1000000 - totals.y26a - totals.y26p) + ' short of the $1MM goal. Closing 2–3 larger commercial jobs in Q3 would close the gap.'}`,
-];
-document.getElementById('ai-insights-body').innerHTML = INSIGHTS.map(i=>`<div class="ai-insight">${i}</div>`).join('');
-
-// Expose YOY + INSIGHTS to the YOY drawer (loaded later in the file)
-window.YOY = YOY;
-window.INSIGHTS = INSIGHTS;
-
-// Build YOY table
-const hdr = document.getElementById('yoy-hdr');
-hdr.innerHTML = '<th style="text-align:left;width:80px">Month</th><th class="r">2020</th><th class="r">2021</th><th class="r">2022</th><th class="r">2023</th><th class="r">2024</th><th class="r">2025</th><th class="r" style="color:#C8963E">2026</th>';
-
-const yoyBody = document.getElementById('yoy-body');
-YOY.forEach((r,i) => {
-  const isActual = r.y26a != null;
-  const y26val = r.y26a || r.y26p;
-  const isCur = i === 3;
-  const isProj = !isActual && y26val;
-  const rowCls = isCur ? 'cur-month' : isProj ? 'proj' : '';
-  yoyBody.innerHTML += `<tr class="${rowCls}">
-    <td>${r.m}${isCur?' ◀':isProj?' *':''}</td>
-    <td class="r">${r.y20?fmt(r.y20):'—'}</td>
-    <td class="r">${r.y21?fmt(r.y21):'—'}</td>
-    <td class="r">${r.y22?fmt(r.y22):'—'}</td>
-    <td class="r">${r.y23?fmt(r.y23):'—'}</td>
-    <td class="r">${r.y24?fmt(r.y24):'—'}</td>
-    <td class="r">${r.y25?fmt(r.y25):'—'}</td>
-    <td class="r" style="${isActual?'color:#0F6E56;font-weight:600':isProj?'color:#888;font-style:italic':''}">${y26val?fmt(y26val):'—'}</td>
-  </tr>`;
-});
-const y26total = totals.y26a + totals.y26p;
-yoyBody.innerHTML += `<tr class="yoy-total">
-  <td>TOTAL</td>
-  <td class="r">${fmt(totals.y20)}</td>
-  <td class="r">${fmt(totals.y21)}</td>
-  <td class="r">${fmt(totals.y22)}</td>
-  <td class="r">${fmt(totals.y23)}</td>
-  <td class="r">${fmt(totals.y24)}</td>
-  <td class="r">${fmt(totals.y25)}</td>
-  <td class="r">${fmt(y26total)} ${y26total>=1000000?'✓ $1MM':''}</td>
-</tr>`;
-
-// Growth row
-const growthPairs = [
-  [null,null],[totals.y21,totals.y20],[totals.y22,totals.y21],
-  [totals.y23,totals.y22],[totals.y24,totals.y23],[totals.y25,totals.y24],[y26total,totals.y25]
-];
-const growthCells = growthPairs.map(([a,b]) => {
-  if(!a||!b) return '<td class="r" style="color:#ccc">—</td>';
-  const g = Math.round((a-b)/b*100);
-  const c = g>=0?'#0F6E56':'#A32D2D';
-  return `<td class="r" style="color:${c}">${g>=0?'+':''}${g}%</td>`;
-}).join('');
-yoyBody.innerHTML += `<tr><td style="font-size:10px;color:#888">YOY growth</td>${growthCells}</tr>`;
-
-// ── TAB SWITCHING ─────────────────────────────────────────────────────
-function switchTab(id) {
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['summary','sales','cashflow','yoy'][i]===id));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-}
-// Attempt live data fetch on load
-loadLiveData();
-</script>
-
-<!-- ============================================================= -->
-<!-- LOCK MONTH + YOY DRAWER (v3) — auto-mounted, KV-backed         -->
-<!-- ============================================================= -->
-
-<style>
-/* YOY drawer */
-.yoy-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);width:38px;padding:20px 0;background:#C8963E;color:#0D1B2A;border:none;border-radius:0 8px 8px 0;cursor:pointer;writing-mode:vertical-rl;text-orientation:mixed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;z-index:90;box-shadow:2px 0 12px rgba(0,0,0,0.1);transition:padding .15s,background .15s;}
-.yoy-tab:hover{padding:24px 0;background:#E8A84E;}
-.yoy-backdrop{position:fixed;inset:0;background:rgba(13,27,42,0);pointer-events:none;z-index:95;transition:background .25s;}
-.yoy-backdrop.open{background:rgba(13,27,42,.45);pointer-events:auto;}
-.yoy-drawer{position:fixed;top:0;left:-560px;bottom:0;width:540px;max-width:100%;background:#fff;border-right:1px solid #e0e0e0;z-index:100;display:flex;flex-direction:column;transition:left .25s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 20px rgba(0,0,0,0);}
-.yoy-drawer.open{left:0;box-shadow:4px 0 24px rgba(0,0,0,0.15);}
-.yoy-head{background:#0D1B2A;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.yoy-head-title{font-size:14px;font-weight:600;color:#fff;letter-spacing:.3px;line-height:1;}
-.yoy-head-sub{font-size:10px;color:#C8963E;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
-.yoy-close{background:none;border:none;color:rgba(255,255,255,.55);font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;}
-.yoy-close:hover{color:#fff;}
-.yoy-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 18px;background:#F8F9FA;border-bottom:1px solid #eee;flex-shrink:0;}
-.yoy-stat-lbl{font-size:9px;font-weight:600;color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
-.yoy-stat-val{font-size:20px;font-weight:600;color:#0D1B2A;line-height:1.1;font-variant-numeric:tabular-nums;}
-.yoy-stat-val.gap{color:#854F0B;}
-.yoy-stat-foot{font-size:10px;color:#888;margin-top:3px;}
-.yoy-insights-box{background:#EEEDFE;border-bottom:1px solid #d8d4f5;padding:12px 18px;flex-shrink:0;}
-.yoy-insights-hdr{font-size:10px;font-weight:600;color:#3C3489;margin-bottom:6px;letter-spacing:.04em;}
-.yoy-insight-item{font-size:11px;color:#26215C;line-height:1.55;margin-bottom:5px;padding-left:9px;border-left:2px solid #7F77DD;}
-.yoy-insight-item:last-child{margin-bottom:0;}
-.yoy-insight-item strong{font-weight:600;}
-.yoy-tbl-wrap{padding:6px 18px 16px;flex:1;overflow-y:auto;}
-.yoy-tbl{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;}
-.yoy-tbl th,.yoy-tbl td{padding:5px 5px;border-bottom:1px solid #f0f0f0;}
-.yoy-tbl th{font-weight:600;text-align:right;color:#fff;background:#0D1B2A;font-size:10px;letter-spacing:.04em;position:sticky;top:0;padding:7px 5px;}
-.yoy-tbl th:first-child,.yoy-tbl td:first-child{text-align:left;color:#444;font-weight:500;}
-.yoy-tbl th:last-child{color:#C8963E;}
-.yoy-tbl td{text-align:right;color:#1a1a1a;}
-.yoy-tbl td.proj{color:#888;font-style:italic;}
-.yoy-tbl td.actual{color:#0F6E56;font-weight:600;}
-.yoy-tbl td.locked{color:#0F6E56;font-weight:600;}
-.yoy-tbl td.locked::after{content:' \1F512';font-size:9px;opacity:.55;}
-.yoy-tbl tr.total td{background:#0D1B2A;color:#C8963E;font-weight:600;border-bottom:none;}
-.yoy-foot{padding:10px 18px;background:#F4F5F7;border-top:1px solid #eee;flex-shrink:0;font-size:10px;color:#888;display:flex;justify-content:space-between;align-items:center;}
-.yoy-foot strong{font-weight:600;color:#0D1B2A;}
-
-/* Lock button + modal */
-.btn-lock{background:#fff;color:#0D1B2A;border:1px solid #C8963E;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;}
-.btn-lock:hover{background:#FFF8EC;}
-.btn-lock.locked{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56;}
-.btn-lock.locked:hover{background:#D0EDDF;}
-.lock-backdrop{position:fixed;inset:0;background:rgba(13,27,42,.55);z-index:300;display:none;align-items:center;justify-content:center;}
-.lock-backdrop.open{display:flex;}
-.lock-modal{background:#fff;border-radius:10px;width:480px;max-width:92vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);}
-.lock-modal-head{background:#0D1B2A;padding:14px 18px;color:#fff;display:flex;align-items:center;justify-content:space-between;}
-.lock-modal-title{font-size:15px;font-weight:600;}
-.lock-modal-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;line-height:1;}
-.lock-modal-close:hover{color:#fff;}
-.lock-modal-body{padding:18px;}
-.lock-explainer{font-size:12px;color:#666;line-height:1.55;margin-bottom:14px;}
-.lock-amount-input{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;padding:14px;background:#F8F9FA;border:1px solid #eee;border-radius:8px;}
-.lock-amount-input span{font-size:16px;color:#0D1B2A;font-weight:600;}
-.lock-amount-input input{flex:1;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:18px;font-weight:600;color:#0D1B2A;font-variant-numeric:tabular-nums;font-family:inherit;}
-.lock-amount-input input:focus{outline:none;border-color:#C8963E;}
-.lock-note-input{margin-bottom:14px;}
-.lock-note-input label{display:block;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-.lock-note-input input{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;}
-.lock-current-state{padding:10px 12px;background:#FFF8EC;border:1px solid #F0C060;border-radius:6px;margin-bottom:14px;font-size:12px;color:#854F0B;}
-.lock-current-state strong{font-weight:600;}
-.lock-modal-actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 18px;background:#F4F5F7;border-top:1px solid #eee;}
-.lock-btn{padding:9px 18px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;}
-.lock-btn-cancel{background:#fff;border:1px solid #ddd;color:#666;}
-.lock-btn-cancel:hover{background:#f5f5f5;}
-.lock-btn-unlock{background:#fff;border:1px solid #E24B4A;color:#A32D2D;}
-.lock-btn-unlock:hover{background:#FCEBEB;}
-.lock-btn-primary{background:#0F6E56;color:#fff;}
-.lock-btn-primary:hover{background:#0a5642;}
-
-@media print{
-  .yoy-tab,.yoy-drawer,.yoy-backdrop,.lock-backdrop,.btn-lock{display:none!important;}
-}
-</style>
-
-<button class="yoy-tab" id="yoy-tab" type="button" title="YOY tracking">YOY</button>
-<div class="yoy-backdrop" id="yoy-backdrop"></div>
-
-<aside class="yoy-drawer" id="yoy-drawer" aria-hidden="true">
-  <div class="yoy-head">
-    <div>
-      <div class="yoy-head-title">YOY sales</div>
-      <div class="yoy-head-sub">where we're headed</div>
-    </div>
-    <button class="yoy-close" id="yoy-close" type="button" aria-label="Close">&times;</button>
-  </div>
-  <div class="yoy-stats">
-    <div>
-      <div class="yoy-stat-lbl">YTD actual</div>
-      <div class="yoy-stat-val" id="yoy-ytd">—</div>
-      <div class="yoy-stat-foot" id="yoy-ytd-foot">—</div>
-    </div>
-    <div>
-      <div class="yoy-stat-lbl">On pace for</div>
-      <div class="yoy-stat-val" id="yoy-pace">—</div>
-      <div class="yoy-stat-foot" id="yoy-pace-foot">—</div>
-    </div>
-    <div>
-      <div class="yoy-stat-lbl">Gap to $1MM</div>
-      <div class="yoy-stat-val gap" id="yoy-gap">—</div>
-      <div class="yoy-stat-foot" id="yoy-gap-foot">—</div>
-    </div>
-  </div>
-  <div class="yoy-insights-box" id="yoy-insights-box" style="display:none">
-    <div class="yoy-insights-hdr">&#10022; Francisco — pattern insights</div>
-    <div id="yoy-insights-body-drawer"></div>
-  </div>
-  <div class="yoy-tbl-wrap">
-    <table class="yoy-tbl">
-      <thead><tr id="yoy-tbl-hdr"></tr></thead>
-      <tbody id="yoy-tbl-body"></tbody>
-    </table>
-  </div>
-  <div class="yoy-foot">
-    <span><strong id="yoy-actual-count">—</strong> of 12 months actual</span>
-    <span>Goal: <strong>$1MM</strong></span>
-  </div>
-</aside>
-
-<div class="lock-backdrop" id="lock-backdrop">
-  <div class="lock-modal">
-    <div class="lock-modal-head">
-      <div class="lock-modal-title" id="lock-modal-title">Lock month</div>
-      <button class="lock-modal-close" id="lock-modal-close">&times;</button>
-    </div>
-    <div class="lock-modal-body">
-      <div class="lock-explainer" id="lock-explainer">
-        Locks this month's value in the YOY chart and re-projects the rest of the year. Useful when someone asks where you're headed mid-month — you can update anytime.
-      </div>
-      <div class="lock-current-state" id="lock-current-state" style="display:none">
-        <strong>Currently locked at <span id="lock-current-amount">—</span></strong> &middot; <span id="lock-current-when">—</span>
-      </div>
-      <div class="lock-amount-input">
-        <span>$</span>
-        <input type="number" id="lock-amount" placeholder="0" step="1" min="0" />
-      </div>
-      <div class="lock-note-input">
-        <label>Optional note</label>
-        <input type="text" id="lock-note" placeholder="e.g. End of month — final" maxlength="120" />
-      </div>
-    </div>
-    <div class="lock-modal-actions">
-      <button class="lock-btn lock-btn-cancel" id="lock-btn-cancel">Cancel</button>
-      <button class="lock-btn lock-btn-unlock" id="lock-btn-unlock" style="display:none">Unlock</button>
-      <button class="lock-btn lock-btn-primary" id="lock-btn-confirm">Lock</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function() {
-  const WORKER_URL = 'https://frosty-base-f01e.erikagonzalez103.workers.dev';
-
-  // ── Drawer toggle ──────────────────────────────────────────────
-  const drawer = document.getElementById('yoy-drawer');
-  const backdrop = document.getElementById('yoy-backdrop');
-  document.getElementById('yoy-tab').addEventListener('click', () => {
-    drawer.classList.contains('open') ? closeDrawer() : openDrawer();
-  });
-  document.getElementById('yoy-close').addEventListener('click', closeDrawer);
-  backdrop.addEventListener('click', closeDrawer);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
-  });
-  function openDrawer() {
-    drawer.classList.add('open'); backdrop.classList.add('open');
-    drawer.setAttribute('aria-hidden', 'false');
-    renderDrawer();
-  }
-  function closeDrawer() {
-    drawer.classList.remove('open'); backdrop.classList.remove('open');
-    drawer.setAttribute('aria-hidden', 'true');
-  }
-
-  // ── Apply locked-month overrides to window.YOY ────────────────
-  function applyLockedMonths() {
-    if (!window.YOY || !window.LIVE_DATA || !window.LIVE_DATA.yoyClosedMonths) return false;
-    const closed = window.LIVE_DATA.yoyClosedMonths;
-    let changed = false;
-    Object.keys(closed).forEach(monthKey => {
-      const idx = parseInt(monthKey, 10) - 1;
-      if (window.YOY[idx]) {
-        const newAmount = closed[monthKey].amount;
-        if (window.YOY[idx].y26a !== newAmount) {
-          window.YOY[idx].y26a = newAmount;
-          window.YOY[idx].y26locked = true;
-          changed = true;
-        }
-      }
-    });
-    if (changed) recomputeProjections();
-    return changed;
-  }
-
-  function recomputeProjections() {
-    if (!window.YOY) return;
-    const ytdActual = window.YOY.filter(r => r.y26a != null).reduce((s, r) => s + r.y26a, 0);
-    const ytd2025 = window.YOY.filter(r => r.y26a != null).reduce((s, r) => s + (r.y25 || 0), 0);
-    const growth = ytd2025 ? ytdActual / ytd2025 : 1;
-    window.YOY.forEach(r => {
-      if (r.y26a != null) r.y26p = null;
-      else if (r.y25) r.y26p = Math.round(r.y25 * growth);
-      else r.y26p = null;
-    });
-  }
-
-  // ── Drawer rendering ───────────────────────────────────────────
-  function fmt(n) { return n != null ? '$' + Math.round(n).toLocaleString() : '—'; }
-
-  function renderDrawer() {
-    applyLockedMonths();
-    const YOY = window.YOY;
-    if (!YOY || !YOY.length) return;
-
-    const actuals = YOY.filter(r => r.y26a != null);
-    const ytd = actuals.reduce((s, r) => s + r.y26a, 0);
-    const projRest = YOY.reduce((s, r) => s + (r.y26p || 0), 0);
-    const pace = ytd + projRest;
-    const gap = 1000000 - pace;
-    const lastActual = actuals[actuals.length - 1];
-    const lastMonth = lastActual ? lastActual.m : '—';
-    const ytd2025Comparable = actuals.reduce((s, r) => s + (r.y25 || 0), 0);
-    const growth = ytd2025Comparable ? Math.round((ytd / ytd2025Comparable - 1) * 100) : null;
-
-    document.getElementById('yoy-ytd').textContent = fmt(ytd);
-    document.getElementById('yoy-ytd-foot').textContent = 'Through ' + lastMonth;
-    document.getElementById('yoy-pace').textContent = fmt(pace);
-    document.getElementById('yoy-pace-foot').textContent = growth != null ? (growth >= 0 ? '+' : '') + growth + '% vs 2025 YTD' : '';
-    document.getElementById('yoy-gap').textContent = (gap >= 0 ? '\u2212' : '+') + fmt(Math.abs(gap));
-    document.getElementById('yoy-gap-foot').textContent = Math.round(pace / 10000) / 100 + '% of goal';
-    document.getElementById('yoy-actual-count').textContent = actuals.length;
-
-    document.getElementById('yoy-tbl-hdr').innerHTML =
-      '<th>Month</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th>';
-
-    const body = document.getElementById('yoy-tbl-body');
-    let rows = '';
-    YOY.forEach(r => {
-      const y26val = r.y26a != null ? r.y26a : r.y26p;
-      let y26cls = '';
-      if (r.y26a != null) y26cls = r.y26locked ? 'locked' : 'actual';
-      else if (y26val) y26cls = 'proj';
-      rows += '<tr>' +
-        '<td>' + r.m.substring(0, 3) + '</td>' +
-        '<td>' + (r.y20 ? Math.round(r.y20 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td>' + (r.y21 ? Math.round(r.y21 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td>' + (r.y22 ? Math.round(r.y22 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td>' + (r.y23 ? Math.round(r.y23 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td>' + (r.y24 ? Math.round(r.y24 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td>' + (r.y25 ? Math.round(r.y25 / 1000) + 'k' : '\u2014') + '</td>' +
-        '<td class="' + y26cls + '">' + (y26val ? Math.round(y26val / 1000) + 'k' : '\u2014') + '</td>' +
-      '</tr>';
-    });
-    const totals = { y20:0, y21:0, y22:0, y23:0, y24:0, y25:0, y26:0 };
-    YOY.forEach(r => {
-      ['y20','y21','y22','y23','y24','y25'].forEach(k => { if (r[k]) totals[k] += r[k]; });
-      totals.y26 += (r.y26a || r.y26p || 0);
-    });
-    rows += '<tr class="total"><td>Total</td>' +
-      '<td>' + (totals.y20 ? Math.round(totals.y20/1000)+'k' : '\u2014') + '</td>' +
-      '<td>' + Math.round(totals.y21/1000) + 'k</td>' +
-      '<td>' + Math.round(totals.y22/1000) + 'k</td>' +
-      '<td>' + Math.round(totals.y23/1000) + 'k</td>' +
-      '<td>' + Math.round(totals.y24/1000) + 'k</td>' +
-      '<td>' + Math.round(totals.y25/1000) + 'k</td>' +
-      '<td>' + Math.round(totals.y26/1000) + 'k</td></tr>';
-    body.innerHTML = rows;
-
-    if (window.INSIGHTS && window.INSIGHTS.length) {
-      document.getElementById('yoy-insights-box').style.display = 'block';
-      document.getElementById('yoy-insights-body-drawer').innerHTML =
-        window.INSIGHTS.map(i => '<div class="yoy-insight-item">' + i + '</div>').join('');
-    }
-  }
-
-  // ── Lock Month button + modal ──────────────────────────────────
-  function refreshLockButton() {
-    const btn = document.getElementById('lock-btn');
-    const d = window.LIVE_DATA;
-    if (!btn || !d) return;
-    const monthName = d.month ? d.month.split(' ')[0] : 'month';
-    const monthKey = d.monthNumber ? String(d.monthNumber).padStart(2, '0') : null;
-    const closed = (d.yoyClosedMonths || {})[monthKey];
-    btn.style.display = 'inline-block';
-    if (closed) {
-      btn.textContent = monthName + ' locked: $' + Math.round(closed.amount).toLocaleString();
-      btn.classList.add('locked');
-    } else {
-      btn.textContent = 'Lock ' + monthName + ': $' + Math.round(d.mtdRevenue || 0).toLocaleString();
-      btn.classList.remove('locked');
-    }
-  }
-
-  function openLockModal() {
-    const d = window.LIVE_DATA;
-    if (!d) return alert('Snapshot data not loaded yet.');
-    const monthName = d.month ? d.month.split(' ')[0] : 'month';
-    const monthKey = d.monthNumber ? String(d.monthNumber).padStart(2, '0') : null;
-    const closed = (d.yoyClosedMonths || {})[monthKey];
-
-    document.getElementById('lock-modal-title').textContent =
-      closed ? 'Re-snap or unlock ' + monthName : 'Lock ' + monthName;
-    document.getElementById('lock-amount').value = Math.round(closed ? closed.amount : (d.mtdRevenue || 0));
-    document.getElementById('lock-note').value = '';
-
-    if (closed) {
-      document.getElementById('lock-current-state').style.display = 'block';
-      document.getElementById('lock-current-amount').textContent = '$' + Math.round(closed.amount).toLocaleString();
-      const when = closed.lockedAt ? new Date(closed.lockedAt).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—';
-      document.getElementById('lock-current-when').textContent = 'locked ' + when;
-      document.getElementById('lock-btn-unlock').style.display = 'inline-block';
-      document.getElementById('lock-btn-confirm').textContent = 'Re-snap to $' + Math.round(d.mtdRevenue || 0).toLocaleString();
-      document.getElementById('lock-explainer').textContent =
-        monthName + ' is currently locked. Re-snap overwrites the locked amount with the current MTD. Unlock removes the lock entirely so the month projects again.';
-    } else {
-      document.getElementById('lock-current-state').style.display = 'none';
-      document.getElementById('lock-btn-unlock').style.display = 'none';
-      document.getElementById('lock-btn-confirm').textContent = 'Lock ' + monthName;
-      document.getElementById('lock-explainer').textContent =
-        'Locks ' + monthName + "'s value in the YOY chart and re-projects the rest of the year. Useful when someone asks where you're headed mid-month — you can update anytime.";
-    }
-
-    document.getElementById('lock-backdrop').classList.add('open');
-    document.getElementById('lock-amount').focus();
-    document.getElementById('lock-amount').select();
-  }
-
-  function closeLockModal() {
-    document.getElementById('lock-backdrop').classList.remove('open');
-  }
-
-  document.getElementById('lock-btn').addEventListener('click', openLockModal);
-  document.getElementById('lock-modal-close').addEventListener('click', closeLockModal);
-  document.getElementById('lock-btn-cancel').addEventListener('click', closeLockModal);
-  document.getElementById('lock-backdrop').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeLockModal();
-  });
-
-  document.getElementById('lock-btn-confirm').addEventListener('click', async () => {
-    const d = window.LIVE_DATA;
-    if (!d) return;
-    const amount = parseFloat(document.getElementById('lock-amount').value);
-    if (isNaN(amount) || amount < 0) return alert('Enter a non-negative number.');
-    const note = document.getElementById('lock-note').value.trim() || null;
-
-    const btn = document.getElementById('lock-btn-confirm');
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
-
-    try {
-      const resp = await fetch(WORKER_URL + '/yoy/lock-month', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: d.year, month: d.monthNumber, amount, note }),
-      });
-      if (!resp.ok) throw new Error('Worker returned ' + resp.status);
-      await resp.json();
-      closeLockModal();
-      await refreshSnapshotData();
-    } catch (err) {
-      alert('Lock failed: ' + err.message);
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
-  });
-
-  document.getElementById('lock-btn-unlock').addEventListener('click', async () => {
-    const d = window.LIVE_DATA;
-    if (!d) return;
-    const monthName = d.month ? d.month.split(' ')[0] : 'month';
-    if (!confirm('Unlock ' + monthName + "? It'll go back to projection.")) return;
-    try {
-      const resp = await fetch(WORKER_URL + '/yoy/unlock-month', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: d.year, month: d.monthNumber }),
-      });
-      if (!resp.ok) throw new Error('Worker returned ' + resp.status);
-      await resp.json();
-      closeLockModal();
-      await refreshSnapshotData();
-    } catch (err) {
-      alert('Unlock failed: ' + err.message);
-    }
-  });
-
-  async function refreshSnapshotData() {
-    try {
-      const resp = await fetch(WORKER_URL + '/snapshot/v2/data');
-      if (!resp.ok) return;
-      window.LIVE_DATA = await resp.json();
-      window.YOY.forEach(r => { if (r.y26locked) { r.y26a = null; r.y26locked = false; } });
-      applyLockedMonths();
-      refreshLockButton();
-      if (drawer.classList.contains('open')) renderDrawer();
-    } catch (e) { console.error('refresh failed:', e); }
-  }
-
-  // ── Hook into existing applyLiveData ───────────────────────────
-  // The snapshot's main script defines applyLiveData and calls it after
-  // /snapshot/data lands. We wrap it so we can react to fresh data
-  // (refresh the lock button + apply locks to the YOY array).
-  const originalApply = window.applyLiveData;
-  if (typeof originalApply === 'function') {
-    window.applyLiveData = function(d) {
-      originalApply(d);
-      window.LIVE_DATA = d;
-      applyLockedMonths();
-      refreshLockButton();
-      if (drawer.classList.contains('open')) renderDrawer();
-    };
-  }
-
-  // Defensive: if applyLiveData ran BEFORE we got here, still pick up data
-  function bootstrap() {
-    if (window.LIVE_DATA && window.YOY) {
-      applyLockedMonths();
-      refreshLockButton();
-    }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrap);
-  else bootstrap();
 })();
 </script>
 
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+//  ERIDION SNAPSHOT — data embedded, refreshed by Claude from live Xero.
+//  Basis: CASH (revenue counted when an invoice is PAID) — matches Erika's
+//  historical Excel. To refresh: re-pull Xero cash P&L per month + cash
+//  position + top customers, update the DATA block below, commit.
+// ═══════════════════════════════════════════════════════════════════════
+const DATA = {
+  asOf: '2026-07-01',
+  xeroSynced: '2026-06-25',          // Xero MCP last-refresh timestamp
+  currentYear: 2026,
+  monthsElapsed: 6,                  // full months of 2026 with data (Jan–Jun)
+  annualGoal: 1000000,               // Erika's stated $1MM goal
+
+  cashOnHand: 32870.89,
+  arOwed: 40421.47,                  // total owed to Eridion (Xero amount_owed)
+  arOverdue: 23148.51,               // overdue portion (includes stale ghosts)
+  arGhostNote: '~$9.7k of the overdue A/R is stale 2024 Grand Homes invoices (899 days old) — write off or chase hard.',
+  apOwed: 1061.99,                   // bills Eridion owes (Xero amount_due)
+
+  // Who paid last completed month (cash), from Xero top-customers
+  lastClosedMonthName: 'June 2026',
+  lastMonthCustomers: [
+    {name:'Grand Homes North Division', amt:37927.15},
+    {name:'Trinity Stairs',             amt:15658.21},
+    {name:'Pennington Commercial',      amt:6925.29},
+    {name:'Hines Homes',                amt:3543.00},
+    {name:'Roof Raiders and Co',        amt:601.32},
+  ],
+
+  // Monthly SALES (cash), Jan..Dec. null = no data.
+  // 2020–2024 from Eridion's historical table (verified to annual totals). 2025–2026 from Xero (cash).
+  yoy: {
+    2020:[null,null,null,null,7549.88,6070.48,null,4942.82,13260.02,3859.18,3336.47,6995.92],
+    2021:[1345.58,2118.46,8872.94,18391.21,14365.71,20700.22,12262.68,13543.38,12162.48,15814.62,6015.06,32250.98],
+    2022:[23202.44,12310.16,25692.91,16945.45,13301.29,26604.62,31618.00,25516.07,38179.73,10914.15,34125.00,47167.49],
+    2023:[27459.45,20074.63,17686.07,19020.95,32038.42,28305.08,46778.69,25874.67,27355.89,33941.93,23502.07,20577.57],
+    2024:[32783.11,32324.72,68312.19,48943.87,62403.35,48149.22,55800.42,25292.17,18986.46,66186.87,23832.76,60840.91],
+    2025:[55184.62,68352.97,52234.17,51042.38,70960.77,82000.08,43062.37,27645.28,63132.47,47195.48,45836.80,39536.43],
+    2026:[33119.91,47110.88,56449.01,26343.69,43570.32,61017.19,null,null,null,null,null,null],
+  },
+};
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const YEARS = [2020,2021,2022,2023,2024,2025,2026];
+const fmt  = n => n!=null ? '$'+Math.round(n).toLocaleString() : '—';
+const fmtD = n => n!=null ? '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',') : '—';
+const sum  = a => a.reduce((s,v)=>s+(v||0),0);
+
+// ── Derived numbers ─────────────────────────────────────────────────────
+const y = DATA.yoy;
+const annual = {}; YEARS.forEach(yr => annual[yr] = sum(y[yr]));
+const me = DATA.monthsElapsed;
+const ytd26 = sum(y[2026].slice(0, me));
+const ytd25 = sum(y[2025].slice(0, me));
+const growthYTD = ytd25 ? (ytd26/ytd25 - 1) : 0;         // e.g. -0.295
+const paceFactor = ytd25 ? ytd26/ytd25 : 1;              // apply to remaining 2025 months
+const projRemainder = sum(y[2025].slice(me).map(v => (v||0)*paceFactor));
+const projFY26 = ytd26 + projRemainder;
+const lastClosed = y[2026][me-1];
+const bestMonthIdx = y[2026].slice(0,me).reduce((bi,v,i,a)=> v>a[bi]?i:bi, 0);
+
+// ── Header / footer ─────────────────────────────────────────────────────
+const asOfNice = new Date(DATA.asOf+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+document.getElementById('hdr-meta').textContent = 'As of '+asOfNice+'  ·  Cash basis  ·  Source: Xero';
+document.getElementById('src-badge').textContent = 'Xero · synced '+new Date(DATA.xeroSynced+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+document.getElementById('snap-footer').textContent = 'Eridion Glass, LLC  ·  numbers pulled live from Xero (cash basis) and reconciled  ·  refreshed '+asOfNice;
+
+// ── SUMMARY: metric cards ───────────────────────────────────────────────
+const growthPct = Math.round(growthYTD*100);
+document.getElementById('sum-metrics').innerHTML = [
+  {val:fmt(lastClosed), lbl:DATA.lastClosedMonthName.split(' ')[0]+' collected', sub:'last full month', cls:'green'},
+  {val:fmt(ytd26), lbl:'2026 YTD', sub:'through '+MONTHS[me-1]+' · cash', cls:'navy'},
+  {val:(growthPct>=0?'+':'')+growthPct+'%', lbl:'vs 2025 pace', sub:fmt(ytd26)+' vs '+fmt(ytd25)+' by now', cls: growthPct>=0?'green':'red'},
+  {val:fmt(DATA.cashOnHand), lbl:'Cash on hand', sub:fmt(DATA.arOwed)+' owed to you', cls:'navy'},
+].map(m=>`<div class="metric"><div class="val ${m.cls}">${m.val}</div><div class="lbl">${m.lbl}</div><div class="sub">${m.sub}</div></div>`).join('');
+
+// ── SUMMARY: YTD progress vs prior-year pace (honest) ───────────────────
+// Bar = 2026 YTD as % of 2025 YTD. Pace tick at 100% = "matching last year".
+const barPct = Math.min(Math.round(ytd26/ytd25*100),100);
+const fcBar = document.getElementById('fc-bar');
+fcBar.style.width = barPct+'%';
+fcBar.classList.add(growthYTD>=0?'green':growthYTD>=-0.1?'amber':'red');
+const pace = document.getElementById('fc-pace');
+pace.style.display='block'; pace.style.left='100%'; pace.setAttribute('data-label','2025 pace');
+document.getElementById('fc-ytd').textContent = '2026 YTD: '+fmt(ytd26);
+document.getElementById('fc-proj').textContent = 'On pace for '+fmt(projFY26)+' this year';
+document.getElementById('fc-goal').textContent = '2025 by now: '+fmt(ytd25);
+document.getElementById('fc-sub').innerHTML =
+  `At the current pace 2026 projects to <strong>${fmt(projFY26)}</strong> — vs 2025's ${fmt(annual[2025])} and the $1MM goal `+
+  `(gap ${fmt(DATA.annualGoal-projFY26)}). Full-year goal marker not shown to scale; the tick above is last year's same-date pace.`;
+
+// ── SUMMARY: flags (computed from real data) ────────────────────────────
+const flags = [];
+if (growthYTD < -0.05) flags.push({type:'danger', text:
+  `<strong>2026 is pacing ${Math.abs(growthPct)}% behind 2025.</strong> ${fmt(ytd26)} collected through ${MONTHS[me-1]} vs ${fmt(ytd25)} by this point last year — a ${fmt(ytd25-ytd26)} gap. Every month Apr–Jun came in under the prior year.`});
+flags.push({type:'ok', text:
+  `<strong>${MONTHS[bestMonthIdx]} was your strongest month of 2026</strong> at ${fmt(y[2026][bestMonthIdx])} cash collected. ${DATA.lastClosedMonthName.split(' ')[0]} closed at ${fmt(lastClosed)}.`});
+flags.push({type:'warn', text:
+  `<strong>${fmt(DATA.arOwed)} is owed to you</strong> (A/R), ${fmt(DATA.arOverdue)} of it overdue. ${DATA.arGhostNote} Collecting the real balance would materially close the pace gap.`});
+flags.push({type:'insight', text:
+  `<strong>Seasonality:</strong> H1 has historically outrun H2 (2025 was ${fmt(ytd25)} H1 vs ${fmt(annual[2025]-ytd25)} H2). With the year already running light, building pipeline now is the lever — the projection above assumes H2 mirrors H1's shortfall.`});
+flags.push({type:'insight', text:
+  `<strong>Bills you owe:</strong> only ${fmt(DATA.apOwed)} in payables — you are not cash-squeezed on the A/P side. The story this year is top-line sales, not cost.`});
+document.getElementById('sum-flags').innerHTML = flags.map(f=>`<div class="flag ${f.type}">${f.text}</div>`).join('');
+
+// ── THIS YEAR: 2026 vs 2025 monthly bars ────────────────────────────────
+const maxBar = Math.max(...y[2026].map(v=>v||0), ...y[2025]);
+document.getElementById('year-bars').innerHTML = MONTHS.map((m,i)=>{
+  const a = y[2026][i], p = y[2025][i];
+  const aH = a!=null ? Math.round(a/maxBar*100) : 0;
+  const pH = Math.round((p||0)/maxBar*100);
+  const barSet = a!=null
+    ? `<div class="bar-val">${a!=null?Math.round(a/1000)+'k':''}</div><div class="bar" style="height:${aH}%" title="2026 ${m}: ${fmt(a)}"></div>`
+    : `<div class="bar prior" style="height:${pH}%;opacity:.55" title="2025 ${m}: ${fmt(p)}"></div>`;
+  return `<div class="bar-col">${barSet}<div class="bar-lbl">${m}</div></div>`;
+}).join('');
+
+// ── THIS YEAR: last-month customer breakdown ────────────────────────────
+document.getElementById('cust-month').textContent = DATA.lastClosedMonthName.split(' ')[0];
+const custTotal = sum(DATA.lastMonthCustomers.map(c=>c.amt));
+document.getElementById('cust-body').innerHTML =
+  DATA.lastMonthCustomers.map(c=>`<tr><td>${c.name}</td><td class="r">${fmtD(c.amt)}</td></tr>`).join('') +
+  `<tr class="total"><td>Top customers total</td><td class="r green">${fmtD(custTotal)}</td></tr>`;
+
+// ── THIS YEAR: money position ───────────────────────────────────────────
+document.getElementById('pos-body').innerHTML = [
+  ['Cash in the bank', DATA.cashOnHand, 'navy'],
+  ['Owed to you (A/R)', DATA.arOwed, 'green'],
+  ['— of which overdue', DATA.arOverdue, 'amber'],
+  ['Bills you owe (A/P)', DATA.apOwed, 'red'],
+].map(([l,v,c])=>`<tr><td>${l}</td><td class="r ${c}">${fmt(v)}</td></tr>`).join('');
+document.getElementById('month-note').textContent =
+  'Customer breakdown = cash received in '+DATA.lastClosedMonthName+' (top payers). Per-invoice detail and Profit First bucket balances live in the Profit First Ledger.';
+
+// ── YOY TABLE ───────────────────────────────────────────────────────────
+document.getElementById('yoy-hdr').innerHTML =
+  '<th style="width:64px">Month</th>' + YEARS.map(yr=>`<th class="r"${yr===2026?' style="color:#C8963E"':''}>${yr}</th>`).join('');
+
+let rows='';
+MONTHS.forEach((m,i)=>{
+  const cells = YEARS.map(yr=>{
+    let v = y[yr][i], cls='r', style='';
+    if (yr===2026 && v==null && y[2025][i]!=null){ v = Math.round(y[2025][i]*paceFactor); style='color:#999;font-style:italic'; }
+    else if (yr===2026 && v!=null){ style='color:#0F6E56;font-weight:600'; }
+    return `<td class="${cls}" style="${style}">${v!=null?fmt(v):'—'}</td>`;
+  }).join('');
+  rows += `<tr><td>${m}</td>${cells}</tr>`;
+});
+// totals row
+const projTotal26 = ytd26 + projRemainder;
+const totCells = YEARS.map(yr=>{
+  const v = yr===2026 ? projTotal26 : annual[yr];
+  return `<td class="r">${fmt(v)}</td>`;
+}).join('');
+rows += `<tr class="yoy-total"><td>TOTAL</td>${totCells}</tr>`;
+// growth row
+let growthCells='';
+YEARS.forEach((yr,idx)=>{
+  if(idx===0){ growthCells+='<td class="r" style="color:#ccc">—</td>'; return; }
+  const cur = yr===2026 ? projTotal26 : annual[yr];
+  const prev = annual[YEARS[idx-1]];
+  const g = prev? Math.round((cur-prev)/prev*100):0;
+  const c = g>=0?'#0F6E56':'#A32D2D';
+  growthCells += `<td class="r" style="color:${c};font-size:10px">${g>=0?'+':''}${g}%</td>`;
+});
+rows += `<tr><td style="font-size:10px;color:#888">Growth</td>${growthCells}</tr>`;
+document.getElementById('yoy-body').innerHTML = rows;
+
+document.getElementById('yoy-note').innerHTML =
+  `2020–2024 from Eridion's historical table; 2025–2026 from Xero (cash basis). 2023 cross-checks against Xero to within $466, confirming both are on the same footing. `+
+  `2026 <em>Jul–Dec are projections</em> (2025 same-month × current YTD pace of ${Math.round(paceFactor*100)}%), shown in grey italic. `+
+  `The $992k "2025" column in the old sheet was a goal, not actuals — real 2025 was ${fmt(annual[2025])}.`;
+
+// ── TABS ────────────────────────────────────────────────────────────────
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+</script>
 </body>
 </html>
