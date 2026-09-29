@@ -7,7 +7,9 @@
   "pacePct": -6,
   "goalForecast": 741379,
   "priorYearTotal": 646184,
-  "arOwed": 0,
+  "arOwed": 10688,
+  "arOverdue": 2970,
+  "arNote": "$2,970 past due · excludes $22,755 in old Xero ghost invoices",
   "apOwed": 19419,
   "url": "https://erikagonzalez103-hash.github.io/eridion-snapshot/"
 }

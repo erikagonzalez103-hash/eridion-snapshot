@@ -212,16 +212,21 @@ const DATA = {
   annualGoal: 1000000,               // Erika's stated $1MM goal
 
   cashOnHand: 32370,                 // Xero balance sheet, bank accounts
-  arOwed: 0,                         // Erika confirmed: no open receivables
-  arOverdue: 0,
-  arGhostNote: '',
+  arOwed: 10687.89,                  // real 2026 open invoices (Xero), ghosts excluded
+  arOverdue: 2969.89,                // past-due portion
+  arNotYetDue: 7718,                 // due Oct 6 week ($5,958) + Oct 27 week ($1,760)
+  arGhostNote: 'Excludes $22,755 in 17 old Xero ghost invoices (120+ days, not real receivables).',
   apOwed: 19419.16,                  // invoiced, unpaid vendor bills (Order Tracker)
   apOverdue: 12827.03,               // past-due portion
   apNote: 'Includes 9 M3 invoices from Nov–Dec 2025 ($5,610) still unpaid.',
   goalMoM: 0.05,                     // forecast method: +5%/month stretch goal to push toward
-  arAwaitingCount: 0,                // open (not-yet-due) invoice count
-  arOverdueCount: 0,                 // overdue invoice count
-  arOpenTop: [],                     // largest open invoices (from Xero receivables)
+  arAwaitingCount: 0,                // open (not-yet-due) invoice count — not itemized
+  arOverdueCount: 3,                 // overdue invoice count
+  arOpenTop: [                       // past-due 2026 invoices (from Xero receivables)
+    {inv:'2108', who:'Grand Homes North Division', amt:1455.72, age:95, ghost:false, note:'due Jun 26 · 95 days past due'},
+    {inv:'2170', who:'Ashley Coker',               amt:1182.70, age:40, ghost:false, note:'due Aug 20 · 40 days past due'},
+    {inv:'2192', who:'Frazier Construction',       amt:331.47,  age:6,  ghost:false, note:'due Sep 23 · 6 days past due'},
+  ],
 
   // Top payers so far this year (Xero invoices paid in 2026, via the worker)
   lastClosedMonthName: 'September 2026',
@@ -309,8 +314,10 @@ flags.push({type:'ok', text:
   `<strong>${MONTHS[bestMonthIdx]} was your strongest month of 2026</strong> at ${fmt(y[2026][bestMonthIdx])} cash collected. ${DATA.lastClosedMonthName.split(' ')[0]} closed at ${fmt(lastClosed)}.`});
 flags.push({type:'insight', text:
   `<strong>Goal forecast:</strong> at +5%/month from ${MONTHS[lastActualIdx]}, 2026 targets <strong>${fmt(projFY26)}</strong> vs 2025's ${fmt(annual[2025])}. That's the number to push toward — it needs the rest of the year to keep building on ${MONTHS[lastActualIdx]}'s pace.`});
-if (DATA.arOwed > 0) flags.push({type:'warn', text:
-  `<strong>${fmt(DATA.arOwed)} shows as owed to you</strong>, but that figure is usually inflated by ghost invoices and small unaccounted leftovers. ${DATA.arGhostNote} Open the A/R line on the "This Year" tab to see what's actually outstanding.`});
+if (DATA.arOwed > 0) flags.push({type: DATA.arOverdue > 0 ? 'warn' : 'insight', text:
+  `<strong>${fmt(DATA.arOwed)} owed to you</strong>`+
+  (DATA.arOverdue > 0 ? `, <strong>${fmt(DATA.arOverdue)} of it past due</strong> across ${DATA.arOverdueCount} invoice${DATA.arOverdueCount===1?'':'s'} — oldest is ${DATA.arOpenTop[0].who} #${DATA.arOpenTop[0].inv}.` : '.')+
+  ` ${DATA.arGhostNote} Open the A/R line on the "This Year" tab for the list.`});
 flags.push({type: DATA.apOverdue > 0 ? 'warn' : 'insight', text:
   `<strong>Bills you owe: ${fmt(DATA.apOwed)}</strong> in vendor invoices from the Order Tracker`+
   (DATA.apOverdue > 0 ? `, <strong>${fmt(DATA.apOverdue)} of it past due</strong>. ${DATA.apNote||''}` : `, nothing past due.`)});
@@ -343,6 +350,8 @@ document.getElementById('pos-body').innerHTML =
   DATA.arOpenTop.map(o=>`<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#666">${o.inv} · ${o.who}${o.ghost?` &nbsp;<span style="color:#A32D2D">${o.age}d old · likely ghost</span>`:(o.note?` · ${o.note}`:'')}</td><td class="r" style="font-size:10px;color:#666">${fmt(o.amt)}</td></tr>`).join('') +
   (hasArDetail && moreOpen > 0 ? `<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#888">…and ${moreOpen} more open invoices — full itemized list arrives with the Monday worker (Xero invoice API)</td><td></td></tr>` : '') +
   (DATA.arOverdue > 0 ? `<tr><td style="color:#854F0B">— of which overdue</td><td class="r amber">${fmt(DATA.arOverdue)}</td></tr>` : '') +
+  (DATA.arNotYetDue > 0 ? `<tr><td style="color:#666">— not yet due</td><td class="r">${fmt(DATA.arNotYetDue)}</td></tr>` : '') +
+  (DATA.arGhostNote ? `<tr><td colspan="2" style="font-size:10px;color:#888">${DATA.arGhostNote}</td></tr>` : '') +
   `<tr><td>Bills you owe (A/P)</td><td class="r red">${fmt(DATA.apOwed)}</td></tr>` +
   (DATA.apOverdue > 0 ? `<tr><td style="color:#854F0B">— of which past due</td><td class="r amber">${fmt(DATA.apOverdue)}</td></tr>` : '');
 if (hasArDetail) document.getElementById('ar-toggle').addEventListener('click', () => {
