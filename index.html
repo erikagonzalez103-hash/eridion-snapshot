@@ -149,7 +149,7 @@ tr.yoy-total td.r{color:#C8963E}
     <span><i class="dot" style="background:#C9CDD3"></i> 2025</span>
   </div>
 
-  <div class="slbl" style="margin-top:16px">Who paid you last month (<span id="cust-month">June</span>)</div>
+  <div class="slbl" style="margin-top:16px" id="cust-heading">Who paid you last month</div>
   <table>
     <thead><tr><th style="width:60%">Customer</th><th class="r" style="width:40%">Paid</th></tr></thead>
     <tbody id="cust-body"></tbody>
@@ -205,34 +205,34 @@ tr.yoy-total td.r{color:#C8963E}
 //  position + top customers, update the DATA block below, commit.
 // ═══════════════════════════════════════════════════════════════════════
 const DATA = {
-  asOf: '2026-07-01',
-  xeroSynced: '2026-06-25',          // Xero MCP last-refresh timestamp
+  asOf: '2026-09-29',
+  xeroSynced: '2026-09-29',          // Xero cash-basis P&L export date
   currentYear: 2026,
-  monthsElapsed: 6,                  // full months of 2026 with data (Jan–Jun)
+  monthsElapsed: 9,                  // months of 2026 with data (Jan–Sep; Sep through the 29th)
   annualGoal: 1000000,               // Erika's stated $1MM goal
 
-  cashOnHand: 32870.89,
-  arOwed: 40421.47,                  // total owed to Eridion (Xero amount_owed)
-  arOverdue: 23148.51,               // overdue portion (includes stale ghosts)
-  arGhostNote: '~$9.7k of the overdue A/R is stale 2024 Grand Homes invoices (899 days old) — write off or chase hard.',
-  apOwed: 1061.99,                   // bills Eridion owes (Xero amount_due)
+  cashOnHand: 32370,                 // Xero balance sheet, bank accounts
+  arOwed: 0,                         // Erika confirmed: no open receivables
+  arOverdue: 0,
+  arGhostNote: '',
+  apOwed: 19419.16,                  // invoiced, unpaid vendor bills (Order Tracker)
+  apOverdue: 12827.03,               // past-due portion
+  apNote: 'Includes 9 M3 invoices from Nov–Dec 2025 ($5,610) still unpaid.',
   goalMoM: 0.05,                     // forecast method: +5%/month stretch goal to push toward
-  arAwaitingCount: 19,               // open (not-yet-due) invoice count
-  arOverdueCount: 17,                // overdue invoice count
-  arOpenTop: [                       // largest open invoices (from Xero receivables)
-    {inv:'INV-1489', who:'Grand Homes',                amt:7167.74, age:899,  ghost:true},
-    {inv:'2128',     who:'Grand Homes North Division', amt:3661.18, age:null, ghost:false, note:'due Jul 25'},
-    {inv:'INV-1488', who:'Grand Homes',                amt:2565.65, age:899,  ghost:true},
-  ],
+  arAwaitingCount: 0,                // open (not-yet-due) invoice count
+  arOverdueCount: 0,                 // overdue invoice count
+  arOpenTop: [],                     // largest open invoices (from Xero receivables)
 
-  // Who paid last completed month (cash), from Xero top-customers
-  lastClosedMonthName: 'June 2026',
+  // Top payers so far this year (Xero invoices paid in 2026, via the worker)
+  lastClosedMonthName: 'September 2026',
+  customersLabel: '2026 so far',
   lastMonthCustomers: [
-    {name:'Grand Homes North Division', amt:37927.15},
-    {name:'Trinity Stairs',             amt:15658.21},
-    {name:'Pennington Commercial',      amt:6925.29},
-    {name:'Hines Homes',                amt:3543.00},
-    {name:'Roof Raiders and Co',        amt:601.32},
+    {name:'Grand Homes North Division',              amt:174393},
+    {name:'Hines Homes',                             amt:94607},
+    {name:'D.R. Horton Inc. NW Arkansas & Little Rock', amt:39273},
+    {name:'Trinity Stairs',                          amt:32304},
+    {name:'Gutman Custom Homes',                     amt:32280},
+    {name:'Lingenfelter Luxury Homes',               amt:25197},
   ],
 
   // Monthly SALES (cash), Jan..Dec. null = no data.
@@ -244,7 +244,7 @@ const DATA = {
     2023:[27459.45,20074.63,17686.07,19020.95,32038.42,28305.08,46778.69,25874.67,27355.89,33941.93,23502.07,20577.57],
     2024:[32783.11,32324.72,68312.19,48943.87,62403.35,48149.22,55800.42,25292.17,18986.46,66186.87,23832.76,60840.91],
     2025:[55184.62,68352.97,52234.17,51042.38,70960.77,82000.08,43062.37,27645.28,63132.47,47195.48,45836.80,39536.43],
-    2026:[33119.91,47110.88,56449.01,26343.69,43570.32,61017.19,null,null,null,null,null,null],
+    2026:[33119.91,47110.88,56449.01,26343.69,45657.69,73863.28,70835.43,51876.82,77984.46,null,null,null],
   },
 };
 
@@ -273,7 +273,7 @@ const bestMonthIdx = y[2026].slice(0,me).reduce((bi,v,i,a)=> v>a[bi]?i:bi, 0);
 const asOfNice = new Date(DATA.asOf+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 document.getElementById('hdr-meta').textContent = 'As of '+asOfNice+'  ·  Cash basis  ·  Source: Xero';
 document.getElementById('src-badge').textContent = 'Xero · synced '+new Date(DATA.xeroSynced+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
-document.getElementById('snap-footer').textContent = 'Eridion Glass, LLC  ·  numbers pulled live from Xero (cash basis) and reconciled  ·  refreshed '+asOfNice;
+document.getElementById('snap-footer').textContent = 'Eridion Glass, LLC  ·  sales from Xero (cash basis), bills from the Order Tracker  ·  refreshed '+asOfNice;
 
 // ── SUMMARY: metric cards ───────────────────────────────────────────────
 const growthPct = Math.round(growthYTD*100);
@@ -301,16 +301,19 @@ document.getElementById('fc-sub').innerHTML =
 
 // ── SUMMARY: flags (computed from real data) ────────────────────────────
 const flags = [];
+const aheadMonths = MONTHS.slice(0, me).filter((m,i) => y[2026][i] > y[2025][i]);
 if (growthYTD < -0.05) flags.push({type:'danger', text:
-  `<strong>2026 is pacing ${Math.abs(growthPct)}% behind 2025.</strong> ${fmt(ytd26)} collected through ${MONTHS[me-1]} vs ${fmt(ytd25)} by this point last year — a ${fmt(ytd25-ytd26)} gap. Every month Apr–Jun came in under the prior year.`});
+  `<strong>2026 is pacing ${Math.abs(growthPct)}% behind 2025.</strong> ${fmt(ytd26)} collected through ${MONTHS[me-1]} vs ${fmt(ytd25)} by this point last year — a ${fmt(ytd25-ytd26)} gap. `+
+  (aheadMonths.length ? `Months that beat last year: ${aheadMonths.join(', ')}.` : `No month has beaten last year yet.`)});
 flags.push({type:'ok', text:
   `<strong>${MONTHS[bestMonthIdx]} was your strongest month of 2026</strong> at ${fmt(y[2026][bestMonthIdx])} cash collected. ${DATA.lastClosedMonthName.split(' ')[0]} closed at ${fmt(lastClosed)}.`});
 flags.push({type:'insight', text:
-  `<strong>Goal forecast:</strong> at +5%/month from ${MONTHS[lastActualIdx]}, 2026 targets <strong>${fmt(projFY26)}</strong> — just above 2025's ${fmt(annual[2025])}. That's the number to push toward; the current run-rate is behind it, so H2 has to beat H1.`});
-flags.push({type:'warn', text:
+  `<strong>Goal forecast:</strong> at +5%/month from ${MONTHS[lastActualIdx]}, 2026 targets <strong>${fmt(projFY26)}</strong> vs 2025's ${fmt(annual[2025])}. That's the number to push toward — it needs the rest of the year to keep building on ${MONTHS[lastActualIdx]}'s pace.`});
+if (DATA.arOwed > 0) flags.push({type:'warn', text:
   `<strong>${fmt(DATA.arOwed)} shows as owed to you</strong>, but that figure is usually inflated by ghost invoices and small unaccounted leftovers. ${DATA.arGhostNote} Open the A/R line on the "This Year" tab to see what's actually outstanding.`});
-flags.push({type:'insight', text:
-  `<strong>Bills you owe:</strong> only ${fmt(DATA.apOwed)} in payables — no A/P squeeze. This year's story is top-line sales, not cost.`});
+flags.push({type: DATA.apOverdue > 0 ? 'warn' : 'insight', text:
+  `<strong>Bills you owe: ${fmt(DATA.apOwed)}</strong> in vendor invoices from the Order Tracker`+
+  (DATA.apOverdue > 0 ? `, <strong>${fmt(DATA.apOverdue)} of it past due</strong>. ${DATA.apNote||''}` : `, nothing past due.`)});
 document.getElementById('sum-flags').innerHTML = flags.map(f=>`<div class="flag ${f.type}">${f.text}</div>`).join('');
 
 // ── THIS YEAR: 2026 vs 2025 monthly bars ────────────────────────────────
@@ -326,27 +329,32 @@ document.getElementById('year-bars').innerHTML = MONTHS.map((m,i)=>{
 }).join('');
 
 // ── THIS YEAR: last-month customer breakdown ────────────────────────────
-document.getElementById('cust-month').textContent = DATA.lastClosedMonthName.split(' ')[0];
+document.getElementById('cust-heading').textContent = DATA.customersLabel ? 'Top customers ('+DATA.customersLabel+')' : 'Who paid you last month ('+DATA.lastClosedMonthName.split(' ')[0]+')';
 const custTotal = sum(DATA.lastMonthCustomers.map(c=>c.amt));
 document.getElementById('cust-body').innerHTML =
   DATA.lastMonthCustomers.map(c=>`<tr><td>${c.name}</td><td class="r">${fmtD(c.amt)}</td></tr>`).join('') +
   `<tr class="total"><td>Top customers total</td><td class="r green">${fmtD(custTotal)}</td></tr>`;
 
 // ── THIS YEAR: money position ───────────────────────────────────────────
+const hasArDetail = DATA.arOpenTop.length > 0;
 const moreOpen = (DATA.arAwaitingCount + DATA.arOverdueCount) - DATA.arOpenTop.length;
 document.getElementById('pos-body').innerHTML =
-  `<tr id="ar-toggle" style="cursor:pointer"><td>Owed to you (A/R) &nbsp;<span id="ar-caret" style="color:#888;font-size:10px">&#9656; what's open</span></td><td class="r green">${fmt(DATA.arOwed)}</td></tr>` +
+  `<tr id="ar-toggle"${hasArDetail?' style="cursor:pointer"':''}><td>Owed to you (A/R)${hasArDetail?` &nbsp;<span id="ar-caret" style="color:#888;font-size:10px">&#9656; what's open</span>`:''}</td><td class="r green">${fmt(DATA.arOwed)}</td></tr>` +
   DATA.arOpenTop.map(o=>`<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#666">${o.inv} · ${o.who}${o.ghost?` &nbsp;<span style="color:#A32D2D">${o.age}d old · likely ghost</span>`:(o.note?` · ${o.note}`:'')}</td><td class="r" style="font-size:10px;color:#666">${fmt(o.amt)}</td></tr>`).join('') +
-  `<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#888">…and ${moreOpen} more open invoices — full itemized list arrives with the Monday worker (Xero invoice API)</td><td></td></tr>` +
-  `<tr><td style="color:#854F0B">— of which overdue</td><td class="r amber">${fmt(DATA.arOverdue)}</td></tr>` +
-  `<tr><td>Bills you owe (A/P)</td><td class="r red">${fmt(DATA.apOwed)}</td></tr>`;
-document.getElementById('ar-toggle').addEventListener('click', () => {
+  (hasArDetail && moreOpen > 0 ? `<tr class="ar-detail" style="display:none"><td style="padding-left:24px;font-size:10px;color:#888">…and ${moreOpen} more open invoices — full itemized list arrives with the Monday worker (Xero invoice API)</td><td></td></tr>` : '') +
+  (DATA.arOverdue > 0 ? `<tr><td style="color:#854F0B">— of which overdue</td><td class="r amber">${fmt(DATA.arOverdue)}</td></tr>` : '') +
+  `<tr><td>Bills you owe (A/P)</td><td class="r red">${fmt(DATA.apOwed)}</td></tr>` +
+  (DATA.apOverdue > 0 ? `<tr><td style="color:#854F0B">— of which past due</td><td class="r amber">${fmt(DATA.apOverdue)}</td></tr>` : '');
+if (hasArDetail) document.getElementById('ar-toggle').addEventListener('click', () => {
   const hidden = document.querySelector('.ar-detail').style.display === 'none';
   document.querySelectorAll('.ar-detail').forEach(r => r.style.display = hidden ? 'table-row' : 'none');
   document.getElementById('ar-caret').innerHTML = (hidden ? '&#9662;' : '&#9656;') + " what's open";
 });
 document.getElementById('month-note').textContent =
-  'Customer breakdown = cash received in '+DATA.lastClosedMonthName+' (top payers). Per-invoice detail and Profit First bucket balances live in the Profit First Ledger.';
+  (DATA.customersLabel
+    ? 'Top customers = invoices paid in '+DATA.customersLabel+' (Xero). '
+    : 'Customer breakdown = cash received in '+DATA.lastClosedMonthName+' (top payers). ') +
+  'Bills you owe come from the Order Tracker. Per-invoice detail and Profit First bucket balances live in the Profit First Ledger.';
 
 // ── YOY TABLE ───────────────────────────────────────────────────────────
 document.getElementById('yoy-hdr').innerHTML =
@@ -384,7 +392,7 @@ document.getElementById('yoy-body').innerHTML = rows;
 
 document.getElementById('yoy-note').innerHTML =
   `2020–2024 from Eridion's historical table; 2025–2026 from Xero (cash basis). 2023 cross-checks against Xero to within $466, confirming both are on the same footing. `+
-  `2026 <em>Jul–Dec are goal targets</em> — +5%/month from ${MONTHS[lastActualIdx]}'s actual, to push the year (grey italic), not a run-rate projection. `+
+  `2026 <em>${MONTHS[me]}–Dec are goal targets</em> — +5%/month from ${MONTHS[lastActualIdx]}'s actual, to push the year (grey italic), not a run-rate projection. `+
   `The $992k "2025" column in the old sheet was a goal, not actuals — real 2025 was ${fmt(annual[2025])}.`;
 
 // ── TABS ────────────────────────────────────────────────────────────────
