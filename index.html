@@ -205,39 +205,41 @@ tr.yoy-total td.r{color:#C8963E}
 //  position + top customers, update the DATA block below, commit.
 // ═══════════════════════════════════════════════════════════════════════
 const DATA = {
-  asOf: '2026-09-29',
-  xeroSynced: '2026-09-29',          // Xero cash-basis P&L export date
+  asOf: '2026-11-03',
+  xeroSynced: '2026-11-03',          // Xero cash-basis P&L export date
   currentYear: 2026,
-  monthsElapsed: 9,                  // months of 2026 with data (Jan–Sep; Sep through the 29th)
+  monthsElapsed: 10,                 // months of 2026 with data (Jan–Oct)
   annualGoal: 1000000,               // Erika's stated $1MM goal
 
-  cashOnHand: 32370,                 // Xero balance sheet, bank accounts
-  arOwed: 10687.89,                  // real 2026 open invoices (Xero), ghosts excluded
-  arOverdue: 2969.89,                // past-due portion
-  arNotYetDue: 7718,                 // due Oct 6 week ($5,958) + Oct 27 week ($1,760)
-  arGhostNote: 'Excludes $22,755 in 17 old Xero ghost invoices (120+ days, not real receivables).',
-  apOwed: 19419.16,                  // invoiced, unpaid vendor bills (Order Tracker)
-  apOverdue: 12827.03,               // past-due portion
-  apNote: 'Includes 9 M3 invoices from Nov–Dec 2025 ($5,610) still unpaid.',
+  cashOnHand: 36655,                 // Xero balance sheet, bank accounts
+  arOwed: 15347.31,                  // real 2026 open invoices (Xero), ghosts excluded
+  arOverdue: 12918.31,               // past-due portion
+  arNotYetDue: 2429,                 // due week of Nov 10
+  arGhostNote: 'Excludes $24,211 in 18 old Xero ghost invoices (120+ days, already paid or not real).',
+  apOwed: 30548.53,                  // invoiced, unpaid vendor bills (Order Tracker)
+  apOverdue: 25339.87,               // past-due portion
+  apNote: 'Past due: FHC $10,356 · IMP $7,401 · M3 $5,610 (Nov–Dec 2025) · Sky $1,972.',
   goalMoM: 0.05,                     // forecast method: +5%/month stretch goal to push toward
   arAwaitingCount: 0,                // open (not-yet-due) invoice count — not itemized
-  arOverdueCount: 3,                 // overdue invoice count
-  arOpenTop: [                       // past-due 2026 invoices (from Xero receivables)
-    {inv:'2108', who:'Grand Homes North Division', amt:1455.72, age:95, ghost:false, note:'due Jun 26 · 95 days past due'},
-    {inv:'2170', who:'Ashley Coker',               amt:1182.70, age:40, ghost:false, note:'due Aug 20 · 40 days past due'},
-    {inv:'2192', who:'Frazier Construction',       amt:331.47,  age:6,  ghost:false, note:'due Sep 23 · 6 days past due'},
+  arOverdueCount: 5,                 // overdue invoice count
+  arOpenTop: [                       // past-due 2026 invoices (from Xero receivables), oldest first
+    {inv:'2170', who:'Ashley Coker',            amt:1182.70, age:75, ghost:false, note:'due Aug 20 · 75 days past due'},
+    {inv:'2192', who:'Frazier Construction',    amt:331.47,  age:41, ghost:false, note:'due Sep 23 · 41 days past due'},
+    {inv:'2201', who:'Hanover Signature Homes', amt:3300.75, age:14, ghost:false, note:'due Oct 20 · 14 days past due'},
+    {inv:'2197', who:'MJV Building Group',      amt:5650.65, age:5,  ghost:false, note:'due Oct 29 · 5 days past due'},
+    {inv:'2198', who:'MJV Building Group',      amt:2452.74, age:5,  ghost:false, note:'due Oct 29 · 5 days past due'},
   ],
 
   // Top payers so far this year (Xero invoices paid in 2026, via the worker)
-  lastClosedMonthName: 'September 2026',
+  lastClosedMonthName: 'October 2026',
   customersLabel: '2026 so far',
   lastMonthCustomers: [
-    {name:'Grand Homes North Division',              amt:174393},
-    {name:'Hines Homes',                             amt:94607},
+    {name:'Grand Homes North Division',              amt:190761},
+    {name:'Hines Homes',                             amt:106944},
+    {name:'Trinity Stairs',                          amt:49220},
     {name:'D.R. Horton Inc. NW Arkansas & Little Rock', amt:39273},
-    {name:'Trinity Stairs',                          amt:32304},
     {name:'Gutman Custom Homes',                     amt:32280},
-    {name:'Lingenfelter Luxury Homes',               amt:25197},
+    {name:'Martyn Hammer Custom Homes',              amt:29196},
   ],
 
   // Monthly SALES (cash), Jan..Dec. null = no data.
@@ -249,7 +251,7 @@ const DATA = {
     2023:[27459.45,20074.63,17686.07,19020.95,32038.42,28305.08,46778.69,25874.67,27355.89,33941.93,23502.07,20577.57],
     2024:[32783.11,32324.72,68312.19,48943.87,62403.35,48149.22,55800.42,25292.17,18986.46,66186.87,23832.76,60840.91],
     2025:[55184.62,68352.97,52234.17,51042.38,70960.77,82000.08,43062.37,27645.28,63132.47,47195.48,45836.80,39536.43],
-    2026:[33119.91,47110.88,56449.01,26343.69,45657.69,73863.28,70835.43,51876.82,77984.46,null,null,null],
+    2026:[33119.91,47110.88,56449.01,26343.69,45657.69,73863.28,70835.43,51876.82,77984.46,62412.69,null,null],
   },
 };
 
