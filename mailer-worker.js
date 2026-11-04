@@ -17,6 +17,7 @@
 //       SENDER_EMAIL       (Text)    erika@eridionglass.com
 //       DION_EMAIL         (Text)    dion@eridionglass.com
 //       SNAPSHOT_JSON_URL  (Text)    https://erikagonzalez103-hash.github.io/eridion-snapshot/data.json
+//       LEDGER_DATA_URL    (Text)    optional — defaults to frosty-base /ledger/data (Accountable Plan block)
 //     *If you don't have the secret value, make a new one in Azure:
 //      App registrations → (your app) → Certificates & secrets → New client secret.
 //     The app needs the "Mail.Send" Application permission (it already has it —
@@ -55,7 +56,37 @@ async function loadData(env) {
   return r.json();
 }
 
-function buildEmail(d) {
+// Accountable Plan log from the ledger's cloud copy (optional — if it can't be
+// reached, the email still carries the weekly checklist).
+async function loadAccountable(env) {
+  const url = env.LEDGER_DATA_URL || 'https://frosty-base-f01e.erikagonzalez103.workers.dev/ledger/data';
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (d && d.stores && d.stores.eg_accountable_v1) || null;
+  } catch (e) { return null; }
+}
+
+function accountableBlock(ap) {
+  let status = '';
+  if (ap && ap.items) {
+    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+    const open = ap.items.filter(it => it.person === 'Dion' && it.status === 'logged');
+    const total = open.reduce((s, it) => s + it.amount, 0);
+    const oldest = open.reduce((m, it) => Math.max(m, Math.round((today - new Date(it.date + 'T00:00:00Z')) / 86400000)), 0);
+    status = open.length
+      ? `<p style="font-size:13px;margin:6px 0">You have <strong>${open.length} unsubmitted item${open.length > 1 ? 's' : ''} (${money(total)})</strong> — oldest is ${oldest} days.` +
+        (oldest >= 45 ? ` <strong style="color:#A32D2D">Submit this week — the limit is 60 days.</strong>` : '') + `</p>`
+      : `<p style="font-size:13px;margin:6px 0">Nothing waiting to be submitted.</p>`;
+  }
+  return `<div style="border-left:3px solid #C8963E;background:#FBF3E2;padding:10px 14px;margin:14px 0;font-size:13px">
+    <strong>Accountable Plan — this week</strong>${status}
+    <div style="line-height:1.7">☐ Log last week's business miles (no commuting)<br>☐ Save receipts — $75+ and all lodging<br>☐ Log out-of-pocket tools, supplies, meals, travel<br>☐ First Monday of the month: build &amp; approve your reimbursement request</div>
+  </div>`;
+}
+
+function buildEmail(d, ap) {
   const behind = d.pacePct < 0;
   return `<div style="font-family:-apple-system,Segoe UI,sans-serif;color:#1a1a1a;max-width:560px">
   <p>Good morning Dion,</p>
@@ -71,6 +102,7 @@ function buildEmail(d) {
         <td style="padding:6px 0 6px 12px;color:#666">+5%/mo push · 2025 finished ${money(d.priorYearTotal)}</td></tr>
   </table>
   <p style="font-size:13px;color:#666">Owed to us (A/R): ~${money(d.arOwed)} <em>(inflated by ghost invoices — real number is lower)</em> &nbsp;·&nbsp; Bills we owe: ${money(d.apOwed)}</p>
+  ${accountableBlock(ap)}
   <p><a href="${d.url}" style="background:#C8963E;color:#0D1B2A;padding:9px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px">Open full snapshot →</a></p>
   <p style="color:#888;font-size:13px">— Eridion Snapshot · sent automatically Monday morning</p>
 </div>`;
@@ -98,7 +130,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       const d = await loadData(env);
-      await sendToDion(env, buildEmail(d));
+      await sendToDion(env, buildEmail(d, await loadAccountable(env)));
     })());
   },
   // Manual endpoints for testing.
@@ -106,10 +138,10 @@ export default {
     const path = new URL(req.url).pathname;
     try {
       if (path === '/preview') {
-        return new Response(buildEmail(await loadData(env)), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        return new Response(buildEmail(await loadData(env), await loadAccountable(env)), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
       if (path === '/send-now') {
-        await sendToDion(env, buildEmail(await loadData(env)));
+        await sendToDion(env, buildEmail(await loadData(env), await loadAccountable(env)));
         return new Response('Sent to ' + env.DION_EMAIL + ' ✓');
       }
       return new Response('Eridion Snapshot Mailer is live. Try /preview (no send) or /send-now (sends to Dion). Cron: Mondays 11:00 UTC.');
