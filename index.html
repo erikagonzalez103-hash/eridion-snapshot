@@ -68,6 +68,24 @@ tr.yoy-total td.r{color:#C8963E}
 .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
 .footer{background:#F4F5F7;padding:10px 20px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee}
 .note{font-size:10px;color:#aaa;margin-top:8px;line-height:1.5}
+.ap-grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:10px}
+.ap-box{background:#F8F9FA;border:1px solid #eee;border-radius:8px;padding:11px 13px}
+.ap-box h4{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.ap-box .val{font-size:19px;font-weight:600;line-height:1.2}
+.ap-box .sub{font-size:10px;color:#888;margin-top:3px;line-height:1.4}
+.ap-box ul{list-style:none;font-size:11px;line-height:1.75;color:#333}
+.ap-box li::before{content:'\2610  ';color:#C8963E}
+.ap-box a{color:#0D1B2A;font-weight:600}
+.debt-hero{background:#F8F9FA;border:1px solid #eee;border-radius:8px;padding:13px 15px}
+.debt-lbl{font-size:10px;font-weight:600;color:#A32D4D;text-transform:uppercase;letter-spacing:.06em}
+.debt-big{font-size:28px;font-weight:700;color:#0D1B2A;line-height:1.1}
+.debt-sub{font-size:11px;color:#666;text-align:right;line-height:1.5}
+.debt-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.debt-item{font-size:11px;color:#333}.debt-item b{display:block;font-size:13px;color:#0D1B2A}
+.debt-mini{height:7px;background:#E6E8EC;border-radius:4px;overflow:hidden;margin:4px 0}
+.debt-mini i{display:block;height:100%;background:#1D9E75;border-radius:4px}
+@media (max-width:700px){.debt-list{grid-template-columns:1fr}}
+@media (max-width:700px){.ap-grid{grid-template-columns:1fr}}
 @media print{
   body{background:#fff;font-size:10px}
   .wrap{padding:0;max-width:100%}
@@ -138,6 +156,33 @@ tr.yoy-total td.r{color:#C8963E}
 
   <div class="slbl" style="margin-top:18px">Flags &amp; what needs attention</div>
   <div class="flags" id="sum-flags"></div>
+
+  <div class="slbl" style="margin-top:18px">Accountable Plan — this week's to-do</div>
+  <div class="ap-grid" id="ap-card">
+    <div class="ap-box"><h4>Erika — not yet submitted</h4><div class="val navy" id="ap-erika">—</div><div class="sub" id="ap-erika-sub">loading…</div></div>
+    <div class="ap-box"><h4>Dion — not yet submitted</h4><div class="val navy" id="ap-dion">—</div><div class="sub" id="ap-dion-sub">loading…</div></div>
+    <div class="ap-box"><h4>Before you close this page</h4>
+      <ul>
+        <li>Log last week's business miles (no commuting)</li>
+        <li>Save receipts — $75+ and all lodging</li>
+        <li>Log out-of-pocket tools, supplies, meals, travel</li>
+        <li>1st Monday: build &amp; approve each request</li>
+      </ul>
+      <div class="sub"><a href="https://erikagonzalez103-hash.github.io/eridion-ledger/">Open the ledger → Accountable Plan tab</a></div>
+    </div>
+  </div>
+  <div class="flags" id="ap-flags" style="margin-top:8px"></div>
+
+  <div class="slbl" style="margin-top:18px">Debt paydown &amp; owner draws</div>
+  <div class="debt-hero">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+      <div><div class="debt-lbl">Debt remaining</div><div class="debt-big" id="debt-total">—</div></div>
+      <div class="debt-sub" id="debt-sub"></div>
+    </div>
+    <div class="prog-wrap" style="height:16px;margin-top:10px"><div class="prog-fill green" id="debt-bar" style="width:0%"></div></div>
+    <div class="debt-list" id="debt-list"></div>
+  </div>
+  <div class="flags" id="debt-flags" style="margin-top:8px"></div>
 </div>
 
 <!-- THIS YEAR -->
@@ -405,6 +450,93 @@ document.getElementById('yoy-note').innerHTML =
   `2020–2024 from Eridion's historical table; 2025–2026 from Xero (cash basis). 2023 cross-checks against Xero to within $466, confirming both are on the same footing. `+
   `2026 <em>${MONTHS[me]}–Dec are goal targets</em> — +5%/month from ${MONTHS[lastActualIdx]}'s actual, to push the year (grey italic), not a run-rate projection. `+
   `The $992k "2025" column in the old sheet was a goal, not actuals — real 2025 was ${fmt(annual[2025])}.`;
+
+// ── ACCOUNTABLE PLAN CARD ────────────────────────────────────────────
+// Reads the ledger's Accountable Plan log (key eg_accountable_v1) from the
+// shared cloud copy; falls back to this browser's copy (same github.io origin).
+// One fetch of the ledger's cloud copy, shared by the Accountable Plan and Debt cards.
+const ledgerStores = (async () => {
+  try {
+    const r = await fetch('https://frosty-base-f01e.erikagonzalez103.workers.dev/ledger/data', {cache:'no-store'});
+    if (r.ok) { const d = await r.json(); if (d && d.stores) return {stores:d.stores, source:'cloud'}; }
+  } catch(e) {}
+  const stores = {};
+  ['eg_accountable_v1','eg_debt_v1','eg_guard_v1','eg_expense_v1'].forEach(k => { try { const v = localStorage.getItem(k); if (v) stores[k] = JSON.parse(v); } catch(e) {} });
+  return {stores, source:'this browser'};
+})();
+
+(async function apCard(){
+  const L = await ledgerStores;
+  let ap = L.stores.eg_accountable_v1 || null, source = L.source;
+  const items = (ap && ap.items) || [], requests = (ap && ap.requests) || [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const age = ds => ds ? Math.round((today - new Date(ds+'T00:00:00'))/86400000) : 0;
+  const money2 = n => '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const weekAgo = today.getTime() - 7*86400000;
+  const flags = [];
+  ['Erika','Dion'].forEach(p => {
+    const open = items.filter(it => it.person===p && it.status==='logged');
+    const total = open.reduce((s,it)=>s+it.amount,0);
+    const oldest = open.reduce((m,it)=>Math.max(m,age(it.date)),0);
+    const lastWeek = items.filter(it => it.person===p && it.id >= weekAgo).length;
+    const key = p.toLowerCase();
+    document.getElementById('ap-'+key).textContent = money2(total);
+    document.getElementById('ap-'+key+'-sub').innerHTML = open.length
+      ? `${open.length} item${open.length>1?'s':''} · oldest <strong class="${oldest>=60?'red':oldest>=45?'amber':'green'}">${oldest} days</strong> · ${lastWeek} logged last 7 days`
+      : `nothing waiting · ${lastWeek} logged last 7 days`;
+    if (oldest >= 60) flags.push({type:'danger', text:`<strong>${p} has expenses past the 60-day window.</strong> Ask Lupe before reimbursing — late items may have to be treated as wages.`});
+    else if (oldest >= 45) flags.push({type:'warn', text:`<strong>${p}: oldest unsubmitted expense is ${oldest} days old.</strong> Build ${p}'s reimbursement request this week (60-day limit).`});
+    const noReceipt = open.filter(it => it.type!=='Mileage' && (it.amount>=75 || it.type==='Lodging') && it.receipt!=='yes').length;
+    if (noReceipt) flags.push({type:'warn', text:`<strong>${p}: ${noReceipt} item${noReceipt>1?'s':''} still need${noReceipt>1?'':'s'} a receipt</strong> ($75+ or lodging) before it can be reimbursed tax-free.`});
+  });
+  const awaiting = requests.filter(r => r.status==='submitted');
+  if (awaiting.length) flags.push({type:'insight', text:`<strong>${awaiting.length} request${awaiting.length>1?'s':''} submitted, awaiting payment</strong> (${money2(awaiting.reduce((s,r)=>s+r.total,0))}) — approve and pay from OPEX, then Mark Paid in the ledger.`});
+  if (!ap) flags.push({type:'insight', text:`No Accountable Plan log found yet — start logging mileage and receipts in the ledger's Accountable Plan tab.`});
+  else if (source !== 'cloud') flags.push({type:'insight', text:`Showing the log saved in this browser (cloud copy unavailable).`});
+  document.getElementById('ap-flags').innerHTML = flags.map(f=>`<div class="flag ${f.type}">${f.text}</div>`).join('');
+})();
+
+
+// ── DEBT PAYDOWN & DRAWS CARD ───────────────────────────────────────
+(async function debtCard(){
+  const L = await ledgerStores;
+  const D = L.stores.eg_debt_v1, G = L.stores.eg_guard_v1 || {}, exps = L.stores.eg_expense_v1 || [];
+  const m0 = n => '$'+Math.round(n).toLocaleString('en-US');
+  const flags = [];
+  if (!D || !D.debts || !D.debts.length) {
+    document.getElementById('debt-total').textContent = '—';
+    document.getElementById('debt-sub').textContent = 'Open the ledger → Owner Pay & Debt to start tracking.';
+  } else {
+    const bal = (d, asOf) => { let b = d.start; (D.events||[]).filter(e => e.debtId===d.id && e.date <= (asOf||'9999')).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id)
+      .forEach(e => { if (e.type==='payment') b -= e.amount; else if (e.type==='statement') b = e.balance; }); return Math.max(0,b); };
+    const today = new Date().toISOString().slice(0,10), ym = today.slice(0,7);
+    const weekAgo = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+    const start = D.debts.reduce((s,d)=>s+d.start,0), now = D.debts.reduce((s,d)=>s+bal(d),0), lastWk = D.debts.reduce((s,d)=>s+bal(d,weekAgo),0);
+    const paidMo = (D.events||[]).filter(e=>e.type==='payment' && e.date.slice(0,7)===ym).reduce((s,e)=>s+e.amount,0);
+    const pct = start ? Math.max(0,Math.min(100,(1-now/start)*100)) : 0;
+    const drop = lastWk - now;
+    document.getElementById('debt-total').textContent = m0(now);
+    document.getElementById('debt-sub').innerHTML = `<strong>${pct.toFixed(1)}% paid off</strong> of ${m0(start)}<br>${drop>0?`<span class="green">▼ ${m0(drop)} this week</span>`:'no change this week'} · ${m0(paidMo)} paid this month`;
+    document.getElementById('debt-bar').style.width = pct.toFixed(1)+'%';
+    const open = D.debts.filter(d=>bal(d)>0).sort((a,b)=>a.priority-b.priority);
+    document.getElementById('debt-list').innerHTML = D.debts.slice().sort((a,b)=>a.priority-b.priority).map(d => {
+      const b = bal(d), p = d.start ? Math.max(0,Math.min(100,(1-b/d.start)*100)) : 0;
+      return `<div class="debt-item"><b>${d.name}${b<=0?' 🎉':open[0]&&open[0].id===d.id?' · focus':''}</b>${m0(b)} left<div class="debt-mini"><i style="width:${p.toFixed(1)}%"></i></div>${p.toFixed(0)}% paid</div>`;
+    }).join('');
+    if (drop > 0) flags.push({type:'ok', text:`<strong>Debt went down ${m0(drop)} this week.</strong> Keep the Debt Paydown sweep going every Tue &amp; Thu/Fri.`});
+    else flags.push({type:'insight', text:`<strong>No debt payment logged in the last 7 days.</strong> Move this week's Debt Paydown bucket balance to the focus debt (${open[0]?open[0].name:'—'}) and log it in the ledger.`});
+  }
+  // Draws this month from Owner's Comp (not payroll, not listed personal bills)
+  const bills = ['Mortgage','Groceries','Vehicle Payment','Personal Insurance','Personal Bills'];
+  const ym = new Date().toISOString().slice(0,7);
+  const draws = exps.filter(e => e.bucket==='owners' && e.status==='paid' && (e.date||'').slice(0,7)===ym && !/^Payroll – /.test(e.category||'') && bills.indexOf(e.category)<0)
+    .reduce((s,e)=>s+e.amount,0);
+  const allow = G.drawAllowance || 0;
+  flags.push(draws > allow
+    ? {type:'danger', text:`<strong>Owner draws this month: ${m0(draws)}</strong> vs a ${m0(allow)} allowance — over by ${m0(draws-allow)}. Payroll comes first; extra draws wait for the quarterly distribution.`}
+    : {type:'ok', text:`<strong>Owner draws this month: ${m0(draws)}</strong> — within the ${m0(allow)} allowance. (Jul–Oct averaged ~$6,370/mo.)`});
+  document.getElementById('debt-flags').innerHTML = flags.map(f=>`<div class="flag ${f.type}">${f.text}</div>`).join('');
+})();
 
 // ── TABS ────────────────────────────────────────────────────────────────
 function switchTab(id, el){
