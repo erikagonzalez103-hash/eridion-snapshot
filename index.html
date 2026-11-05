@@ -507,12 +507,17 @@ const ledgerStores = (async () => {
     document.getElementById('debt-total').textContent = '—';
     document.getElementById('debt-sub').textContent = 'Open the ledger → Owner Pay & Debt to start tracking.';
   } else {
-    const bal = (d, asOf) => { let b = d.start; (D.events||[]).filter(e => e.debtId===d.id && e.date <= (asOf||'9999')).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id)
+    // Same as the ledger: logged payments + paid bills whose vendor matches the debt (e.g. Beyond → USAA).
+    const allEv = (D.events||[]).slice();
+    D.debts.forEach(d => { if (!d.match) return; let re; try { re = new RegExp(d.match,'i'); } catch(e) { return; }
+      exps.forEach(e => { if (e.status==='paid' && !e.debtEventId && e.date && e.date >= d.startDate && re.test((e.vendor||'')+' '+(e.category||'')))
+        allEv.push({id:e.id, debtId:d.id, type:'payment', date:e.date, amount:e.amount}); }); });
+    const bal = (d, asOf) => { let b = d.start; allEv.filter(e => e.debtId===d.id && e.date <= (asOf||'9999')).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id)
       .forEach(e => { if (e.type==='payment') b -= e.amount; else if (e.type==='statement') b = e.balance; }); return Math.max(0,b); };
     const today = new Date().toISOString().slice(0,10), ym = today.slice(0,7);
     const weekAgo = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
     const start = D.debts.reduce((s,d)=>s+d.start,0), now = D.debts.reduce((s,d)=>s+bal(d),0), lastWk = D.debts.reduce((s,d)=>s+bal(d,weekAgo),0);
-    const paidMo = (D.events||[]).filter(e=>e.type==='payment' && e.date.slice(0,7)===ym).reduce((s,e)=>s+e.amount,0);
+    const paidMo = allEv.filter(e=>e.type==='payment' && e.date.slice(0,7)===ym).reduce((s,e)=>s+e.amount,0);
     const pct = start ? Math.max(0,Math.min(100,(1-now/start)*100)) : 0;
     const drop = lastWk - now;
     document.getElementById('debt-total').textContent = m0(now);
